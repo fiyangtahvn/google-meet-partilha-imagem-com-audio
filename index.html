@@ -275,7 +275,7 @@ button {
   background: var(--accent-blue-hover);
 }
 
-/* 统一导入下拉菜单 */
+/* 统一设置下拉菜单与导入菜单 */
 .import-dropdown-container {
   position: relative;
   display: inline-block;
@@ -296,13 +296,13 @@ button {
   position: absolute;
   top: calc(100% + 6px);
   right: 0;
-  background: rgba(26, 30, 36, 0.98);
+  background: rgba(22, 27, 34, 0.98);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-xl);
-  min-width: 175px;
-  padding: 6px;
+  min-width: 250px;
+  padding: 8px;
   display: none;
   z-index: 1000;
   animation: menuAppear 0.12s ease-out;
@@ -310,6 +310,114 @@ button {
 
 .import-dropdown-container.open .import-dropdown-menu {
   display: block;
+}
+
+.settings-menu-group-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 4px 8px 6px;
+}
+
+.settings-menu-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 6px 0;
+}
+
+/* 光标随动广告设置项 */
+.cursor-ad-setting-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+}
+
+.cursor-ad-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.switch-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 12px;
+  color: #fff;
+}
+
+.switch-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 15px;
+  height: 15px;
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  outline: none;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  margin: 0;
+}
+
+.switch-checkbox:hover {
+  border-color: #60a5fa;
+}
+
+.switch-checkbox:checked {
+  background-color: var(--accent-blue);
+  border-color: var(--accent-blue);
+}
+
+.switch-checkbox:checked::after {
+  content: '';
+  position: absolute;
+  left: 3.5px;
+  top: 1px;
+  width: 4px;
+  height: 7.5px;
+  border: solid white;
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(45deg);
+}
+
+.cursor-ad-input {
+  width: 100%;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-sm);
+  color: #f3f4f6;
+  font-size: 11px;
+  padding: 5px 8px;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.cursor-ad-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+}
+
+/* 鼠标随动丝带文字 Canvas 画布 (全屏覆盖、全事件穿透) */
+#cursorRibbonCanvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none !important;
+  z-index: 99999;
 }
 
 .dropdown-item {
@@ -1147,6 +1255,13 @@ textarea.fabric-textarea,
   overflow: hidden;
 }
 
+.batch-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+}
+
 .batch-title {
   font-size: 13px;
   font-weight: 600;
@@ -1154,6 +1269,49 @@ textarea.fabric-textarea,
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.batch-rename-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  opacity: 0.35;
+  transition: all 0.15s;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.batch-header:hover .batch-rename-btn {
+  opacity: 0.85;
+}
+
+.batch-rename-btn:hover {
+  color: #60a5fa;
+  opacity: 1;
+  background: rgba(96, 165, 250, 0.15);
+}
+
+.batch-rename-btn i {
+  width: 13px;
+  height: 13px;
+}
+
+.batch-rename-input {
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid #3b82f6;
+  border-radius: var(--radius-sm);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 6px;
+  outline: none;
+  width: 100%;
+  max-width: 200px;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
 }
 
 .batch-meta {
@@ -1227,6 +1385,41 @@ textarea.fabric-textarea,
   border: 1px solid transparent;
   cursor: pointer;
   transition: all 0.15s;
+  user-select: none;
+  position: relative;
+}
+
+.file-tree-item.dragging, .file-item.dragging {
+  opacity: 0.45;
+  background: rgba(37, 99, 235, 0.15) !important;
+  border: 1px dashed #60a5fa !important;
+}
+
+.file-tree-item.drag-over-top, .file-item.drag-over-top {
+  border-top: 2px solid #3b82f6 !important;
+}
+
+.file-tree-item.drag-over-bottom, .file-item.drag-over-bottom {
+  border-bottom: 2px solid #3b82f6 !important;
+}
+
+.drag-handle {
+  width: 13px;
+  height: 13px;
+  color: var(--text-dim);
+  cursor: grab;
+  opacity: 0.35;
+  transition: opacity 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+
+.file-tree-item:hover .drag-handle, .file-item:hover .drag-handle {
+  opacity: 0.85;
+  color: #93c5fd;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
 }
 
 .file-tree-item:hover {
@@ -1506,6 +1699,9 @@ textarea.fabric-textarea,
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
+  <!-- 鼠标随动幻彩丝带文字 Canvas (全事件穿透) -->
+  <canvas id="cursorRibbonCanvas"></canvas>
+
   <div id="app" class="app-container">
     
     <!-- 顶部滑入感应区 -->
@@ -1558,14 +1754,33 @@ textarea.fabric-textarea,
           <span class="badge-count" id="mediaCountBadge" title="已导入批次数量">0</span>
         </button>
 
-        <!-- 合并后的统一导入媒体入口 -->
+        <!-- 设置与导入合并入口 (设置齿轮) -->
         <div class="import-dropdown-container" id="importDropdownContainer">
-          <button class="primary-btn" id="importUnifiedBtn" title="导入本地文件夹或文件">
-            <i data-lucide="plus-circle"></i>
-            <span>导入媒体</span>
+          <button class="primary-btn" id="importUnifiedBtn" title="系统设置与媒体导入">
+            <i data-lucide="settings"></i>
             <i data-lucide="chevron-down" class="btn-chevron"></i>
           </button>
           <div class="import-dropdown-menu" id="importDropdownMenu">
+            <div class="settings-menu-group-title">幻彩标语与窗口走马灯</div>
+            <div class="cursor-ad-setting-box" id="cursorAdSettingBox">
+              <div class="cursor-ad-toggle-row">
+                <label class="switch-label">
+                  <input type="checkbox" class="switch-checkbox" id="cursorAdToggleCheckbox">
+                  <span>开启随动幻彩文字</span>
+                </label>
+              </div>
+              <div class="cursor-ad-toggle-row" style="margin-top: 6px;">
+                <label class="switch-label">
+                  <input type="checkbox" class="switch-checkbox" id="windowMarqueeToggleCheckbox">
+                  <span>开启窗口边缘走马灯</span>
+                </label>
+              </div>
+              <input type="text" class="cursor-ad-input" id="cursorAdTextInput" placeholder="输入跟随文字，如：主讲人 · 欢迎咨询" value="主讲人 · 欢迎咨询">
+            </div>
+
+            <div class="settings-menu-divider"></div>
+
+            <div class="settings-menu-group-title">媒体资源导入</div>
             <div class="dropdown-item" id="importFolderOpt">
               <i data-lucide="folder-open"></i>
               <span>导入本地文件夹...</span>
@@ -1844,6 +2059,11 @@ const state = {
   collapseTimer: null,
   isContinuousPlay: false, // 连播开关：false (默认单曲播放完自动停止), true (列表连播)
   
+  // 光标随动广告与窗口走马灯状态
+  cursorAdEnabled: false,
+  windowMarqueeEnabled: false,
+  cursorAdText: '主讲人 · 欢迎咨询',
+  
   // 当前交互工具: 'select' | 'pen' | 'highlighter' | 'text' | 'eraser'
   currentTool: 'select',
   currentColor: '#ff3b30',
@@ -1865,6 +2085,13 @@ const elements = {
   folderInput: document.getElementById('folderInput'),
   filesInput: document.getElementById('filesInput'),
   globalDragOverlay: document.getElementById('globalDragOverlay'),
+  
+  // 鼠标随动丝带文字与窗口走马灯元素
+  cursorRibbonCanvas: document.getElementById('cursorRibbonCanvas'),
+  cursorAdToggleCheckbox: document.getElementById('cursorAdToggleCheckbox'),
+  windowMarqueeToggleCheckbox: document.getElementById('windowMarqueeToggleCheckbox'),
+  cursorAdTextInput: document.getElementById('cursorAdTextInput'),
+  cursorAdSettingBox: document.getElementById('cursorAdSettingBox'),
   
   mainWorkspace: document.getElementById('mainWorkspace'),
   viewerContainer: document.getElementById('viewerContainer'),
@@ -2004,7 +2231,7 @@ const DB = {
     }
   },
 
-  // 存储批次
+  // 存储批次 (包含文件排序 ID 序列)
   async saveBatch(batch) {
     if (!this.db || !batch) return;
     try {
@@ -2014,7 +2241,9 @@ const DB = {
         index: batch.index,
         name: batch.name,
         time: batch.time,
-        isCollapsed: batch.isCollapsed
+        isCollapsed: batch.isCollapsed,
+        visualFileIds: batch.visualFiles ? batch.visualFiles.map(f => f.id) : [],
+        audioFileIds: batch.audioFiles ? batch.audioFiles.map(a => a.id) : []
       });
     } catch (e) {
       console.warn('持久化存储批次失败:', e);
@@ -2260,6 +2489,35 @@ async function restoreSavedSession() {
     b => b.visualFiles.length > 0 || b.audioFiles.length > 0
   );
 
+  // 恢复批次文件排序：若存有自定义排序ID序列则按序列恢复，否则默认按文件名自然排序
+  state.batches.forEach(b => {
+    const rawBatchData = data.batches ? data.batches.find(raw => raw.id === b.id) : null;
+    if (rawBatchData && Array.isArray(rawBatchData.visualFileIds) && rawBatchData.visualFileIds.length > 0) {
+      b.visualFiles.sort((m, n) => {
+        const idxM = rawBatchData.visualFileIds.indexOf(m.id);
+        const idxN = rawBatchData.visualFileIds.indexOf(n.id);
+        if (idxM !== -1 && idxN !== -1) return idxM - idxN;
+        return m.name.localeCompare(n.name, undefined, { numeric: true, sensitivity: 'base' });
+      });
+    } else {
+      sortFilesByName(b.visualFiles);
+    }
+
+    if (rawBatchData && Array.isArray(rawBatchData.audioFileIds) && rawBatchData.audioFileIds.length > 0) {
+      b.audioFiles.sort((m, n) => {
+        const idxM = rawBatchData.audioFileIds.indexOf(m.id);
+        const idxN = rawBatchData.audioFileIds.indexOf(n.id);
+        if (idxM !== -1 && idxN !== -1) return idxM - idxN;
+        return m.name.localeCompare(n.name, undefined, { numeric: true, sensitivity: 'base' });
+      });
+    } else {
+      sortFilesByName(b.audioFiles);
+    }
+  });
+
+  // 同步扁平全局文件列表
+  syncFlatFilesFromBatches();
+
   // 3. 恢复所有标注到内存字典
   if (data.annotations && data.annotations.length > 0) {
     data.annotations.forEach(a => {
@@ -2307,6 +2565,7 @@ async function restoreSavedSession() {
 // ==========================================
 async function init() {
   initPlayMode();
+  initCursorAd();
   lucide.createIcons();
   setupEventListeners();
   setupFloatingPlayerDrag();
@@ -2553,6 +2812,7 @@ let isMouseInTopNav = false;
 let isMouseInDrawer = false;
 let isMouseInPlayer = false;
 let topNavTimer = null;
+let dropdownTimer = null;
 
 function showTopNav() {
   if (topNavTimer) {
@@ -2583,13 +2843,91 @@ function collapseTopNav(delay = 1000) {
 // 事件监听绑定
 // ==========================================
 function setupEventListeners() {
-  // 统一导入下拉菜单交互
+  // 统一设置与导入下拉菜单交互
   if (elements.importUnifiedBtn) {
     elements.importUnifiedBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       elements.importDropdownContainer.classList.toggle('open');
     });
   }
+
+  // 设置菜单自动收起：遵循顶部工具栏逻辑（离开 1 秒后收起，移入取消）
+  if (elements.importDropdownContainer) {
+    elements.importDropdownContainer.addEventListener('mouseenter', () => {
+      if (dropdownTimer) { clearTimeout(dropdownTimer); dropdownTimer = null; }
+    });
+    elements.importDropdownContainer.addEventListener('mouseleave', () => {
+      if (dropdownTimer) clearTimeout(dropdownTimer);
+      dropdownTimer = setTimeout(() => {
+        elements.importDropdownContainer.classList.remove('open');
+        dropdownTimer = null;
+      }, 1000);
+    });
+  }
+
+  // 点击随动广告设置卡片内部时阻止关闭菜单
+  if (elements.cursorAdSettingBox) {
+    elements.cursorAdSettingBox.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+  }
+
+  // 光标随动广告与走马灯开关及文字监听
+  if (elements.cursorAdToggleCheckbox) {
+    elements.cursorAdToggleCheckbox.addEventListener('change', (e) => {
+      setCursorAdEnabled(e.target.checked);
+    });
+  }
+
+  if (elements.windowMarqueeToggleCheckbox) {
+    elements.windowMarqueeToggleCheckbox.addEventListener('change', (e) => {
+      setWindowMarqueeEnabled(e.target.checked);
+    });
+  }
+
+  if (elements.cursorAdTextInput) {
+    elements.cursorAdTextInput.addEventListener('input', (e) => {
+      setCursorAdText(e.target.value);
+    });
+    // 锁定全局快捷键：在此输入框内打字、移动光标时，所有按键事件不向上冒泡到 window
+    elements.cursorAdTextInput.addEventListener('keydown', (e) => {
+      e.stopPropagation();
+    });
+    elements.cursorAdTextInput.addEventListener('keyup', (e) => {
+      e.stopPropagation();
+    });
+    // Esc 键失焦，关闭当前输入状态
+    elements.cursorAdTextInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        elements.cursorAdTextInput.blur();
+      }
+    }, true);
+  }
+
+  // 鼠标随动丝带文字移动轨迹监听
+  window.addEventListener('mousemove', (e) => {
+    // 当处于静止消隐状态时，将所有粒子节点预置在鼠标位置，实现从鼠标处宛如丝带拉出的飘逸效果
+    if (typeof ribbonSystem !== 'undefined') {
+      if (ribbonSystem.alpha <= 0.02) {
+        for (let i = 0; i < ribbonSystem.points.length; i++) {
+          ribbonSystem.points[i].x = e.clientX + 14;
+          ribbonSystem.points[i].y = e.clientY + 14;
+          ribbonSystem.points[i].angle = 0;
+        }
+      }
+      ribbonSystem.mouseX = e.clientX;
+      ribbonSystem.mouseY = e.clientY;
+      ribbonSystem.lastMoveTime = performance.now();
+    }
+  });
+
+  document.addEventListener('mouseleave', () => {
+    if (typeof ribbonSystem !== 'undefined') {
+      ribbonSystem.mouseX = -999;
+      ribbonSystem.mouseY = -999;
+    }
+  });
   if (elements.importFolderOpt) {
     elements.importFolderOpt.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -2627,7 +2965,26 @@ function setupEventListeners() {
   // 全局拖拽支持与防抖计数器 (无论是在空白页还是已打开内容中，随时拖放导入)
   let dragCounter = 0;
 
+  // 严格判断是否允许触发全局外部文件拖放导入
+  function isAllowedExternalFileDrag(e) {
+    // 1. 打开抽屉列表时，将主界面的外部文件拖入功能完全锁定
+    if (elements.mediaDrawer && elements.mediaDrawer.classList.contains('open')) {
+      return false;
+    }
+    // 2. 内部条目正在拖拽排序时，锁定外部拖入
+    if (window.isInternalFileDragging || draggedItemInfo) {
+      return false;
+    }
+    // 3. 必须由操作系统拖入文件 (包含 Files 类型)
+    if (!e.dataTransfer || !e.dataTransfer.types) {
+      return false;
+    }
+    const types = Array.from(e.dataTransfer.types);
+    return types.includes('Files');
+  }
+
   window.addEventListener('dragenter', (e) => {
+    if (!isAllowedExternalFileDrag(e)) return;
     e.preventDefault();
     dragCounter++;
     if (elements.globalDragOverlay) {
@@ -2639,6 +2996,7 @@ function setupEventListeners() {
   });
 
   window.addEventListener('dragover', (e) => {
+    if (!isAllowedExternalFileDrag(e)) return;
     e.preventDefault();
     if (e.dataTransfer) {
       e.dataTransfer.dropEffect = 'copy';
@@ -2646,6 +3004,7 @@ function setupEventListeners() {
   });
 
   window.addEventListener('dragleave', (e) => {
+    if (!isAllowedExternalFileDrag(e)) return;
     e.preventDefault();
     dragCounter--;
     if (dragCounter <= 0) {
@@ -2660,6 +3019,16 @@ function setupEventListeners() {
   });
 
   window.addEventListener('drop', (e) => {
+    if (!isAllowedExternalFileDrag(e)) {
+      dragCounter = 0;
+      if (elements.globalDragOverlay) {
+        elements.globalDragOverlay.classList.remove('active');
+      }
+      if (elements.dropZone) {
+        elements.dropZone.classList.remove('drag-over');
+      }
+      return;
+    }
     e.preventDefault();
     dragCounter = 0;
     if (elements.globalDragOverlay) {
@@ -3131,8 +3500,15 @@ function addFileDirectly(file, currentBatch) {
 
 // 文件导入完成回调
 function onFilesImported() {
-  // 持久化保存所有批次
-  state.batches.forEach(b => DB.saveBatch(b));
+  // 1. 默认对所有批次内部的视觉文件与音频文件按名称进行自然排序
+  state.batches.forEach(b => {
+    sortFilesByName(b.visualFiles);
+    sortFilesByName(b.audioFiles);
+    DB.saveBatch(b);
+  });
+
+  // 2. 重新汇总全局扁平文件列表（保证全局播放顺序与批次内自然排序严格一致）
+  syncFlatFilesFromBatches();
 
   updateDrawerLists();
   elements.mediaCountBadge.textContent = state.batches.length;
@@ -3467,6 +3843,14 @@ function setTool(toolName) {
   elements.toolButtons.forEach(btn => {
     btn.classList.toggle('active', btn.getAttribute('data-tool') === toolName);
   });
+
+  // 当使用工具栏的功能（橡皮擦、输入文字、画笔、荧光笔等）时不显示丝带文字
+  if (toolName !== 'select' && typeof ribbonSystem !== 'undefined') {
+    ribbonSystem.alpha = 0;
+    if (ribbonSystem.ctx && ribbonSystem.canvas) {
+      ribbonSystem.ctx.clearRect(0, 0, ribbonSystem.canvas.width, ribbonSystem.canvas.height);
+    }
+  }
 
   if (!fabricCanvas) return;
 
@@ -4091,13 +4475,25 @@ function setupFloatingPlayerDrag() {
 // ==========================================
 function setupKeyboardShortcuts() {
   window.addEventListener('keydown', (e) => {
-    // 避免在输入框或正在编辑标注文字时触发全局快捷键 (如方向键翻页/滚动)
-    if (
+    // 锁定全局快捷键：以下任意情况均完全屏蔽，避免方向键/F键等误触发翻页/滚动/跳曲
+    const activeEl = document.activeElement;
+    const isFocusedOnInput =
+      activeEl && (
+        activeEl.tagName === 'INPUT' ||
+        activeEl.tagName === 'TEXTAREA' ||
+        activeEl.isContentEditable
+      );
+    const isFabricEditing =
+      fabricCanvas &&
+      fabricCanvas.getActiveObject &&
+      fabricCanvas.getActiveObject() &&
+      fabricCanvas.getActiveObject().isEditing;
+    const isTargetInput =
       e.target.tagName === 'INPUT' ||
       e.target.tagName === 'TEXTAREA' ||
-      e.target.isContentEditable ||
-      (fabricCanvas && fabricCanvas.getActiveObject() && fabricCanvas.getActiveObject().isEditing)
-    ) {
+      e.target.isContentEditable;
+
+    if (isFocusedOnInput || isFabricEditing || isTargetInput) {
       return;
     }
 
@@ -4333,6 +4729,15 @@ function toggleDrawer() {
 
 function openDrawer() {
   cancelDrawerClose();
+  // 打开列表时强制关闭并锁定外部拖入遮罩
+  if (elements.globalDragOverlay) {
+    elements.globalDragOverlay.classList.remove('active');
+  }
+  if (elements.dropZone) {
+    elements.dropZone.classList.remove('drag-over');
+  }
+  dragCounter = 0;
+
   elements.mediaDrawer.classList.add('open');
   // 仅在鼠标既不在抽屉内、也不在播放器上、也不在顶部栏时，才启动延时自动收回
   if (!isMouseInDrawer && !isMouseInPlayer && !isMouseInTopNav) {
@@ -4373,6 +4778,194 @@ function switchDrawerTab(tab) {
   }
 }
 
+// ==========================================
+// 媒体排序、批次重命名与拖拽排序管理
+// ==========================================
+
+// 自然文件名排序 (支持数字智能对比，如 06 Faixa 6, 07 Faixa 7)
+function sortFilesByName(list) {
+  if (!Array.isArray(list)) return list;
+  return list.sort((a, b) =>
+    a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
+  );
+}
+
+// 同步从各批次重构全局扁平列表，确保展示与播放索引精准对应
+function syncFlatFilesFromBatches() {
+  const currentVisualId = (state.currentVisualIndex >= 0 && state.visualFiles[state.currentVisualIndex]) 
+    ? state.visualFiles[state.currentVisualIndex].id 
+    : null;
+  const currentAudioId = (state.currentAudioIndex >= 0 && state.audioFiles[state.currentAudioIndex]) 
+    ? state.audioFiles[state.currentAudioIndex].id 
+    : null;
+
+  const newVisual = [];
+  const newAudio = [];
+  state.batches.forEach(b => {
+    if (b.visualFiles) newVisual.push(...b.visualFiles);
+    if (b.audioFiles) newAudio.push(...b.audioFiles);
+  });
+  state.visualFiles = newVisual;
+  state.audioFiles = newAudio;
+
+  if (currentVisualId) {
+    const idx = state.visualFiles.findIndex(f => f.id === currentVisualId);
+    state.currentVisualIndex = idx !== -1 ? idx : Math.min(state.currentVisualIndex, state.visualFiles.length - 1);
+  }
+  if (currentAudioId) {
+    const idx = state.audioFiles.findIndex(a => a.id === currentAudioId);
+    state.currentAudioIndex = idx !== -1 ? idx : Math.min(state.currentAudioIndex, state.audioFiles.length - 1);
+  }
+}
+
+// 修改批次名称
+function renameBatch(batchId, newName) {
+  const batch = state.batches.find(b => b.id === batchId);
+  if (!batch || !newName) return;
+  batch.name = newName;
+
+  // 同步更新该批次中所有文件的 batchName 属性
+  batch.visualFiles.forEach(f => {
+    f.batchName = newName;
+    DB.saveFile(f, batch.id, newName);
+  });
+  batch.audioFiles.forEach(a => {
+    a.batchName = newName;
+    DB.saveFile(a, batch.id, newName);
+  });
+
+  DB.saveBatch(batch);
+  updateDrawerLists();
+  showShortcutToast(`批次名称已修改为: ${newName}`);
+}
+
+// 拖拽排序状态记录
+let draggedItemInfo = null;
+
+// 绑定文件条目的拖拽排序事件
+function bindFileDragAndDrop(el, file, batch, type) {
+  el.setAttribute('draggable', 'true');
+
+  el.addEventListener('dragstart', (e) => {
+    if (e.target.closest('.file-unload-btn') || e.target.closest('.batch-rename-btn')) {
+      e.preventDefault();
+      return;
+    }
+    window.isInternalFileDragging = true;
+    draggedItemInfo = {
+      fileId: file.id,
+      batchId: batch ? batch.id : file.batchId,
+      type: type
+    };
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', file.id);
+
+    // 确保内部条目拖动绝不触发外部全屏导入遮罩
+    if (elements.globalDragOverlay) {
+      elements.globalDragOverlay.classList.remove('active');
+    }
+    if (elements.dropZone) {
+      elements.dropZone.classList.remove('drag-over');
+    }
+    dragCounter = 0;
+
+    setTimeout(() => el.classList.add('dragging'), 0);
+  });
+
+  el.addEventListener('dragend', () => {
+    window.isInternalFileDragging = false;
+    draggedItemInfo = null;
+    el.classList.remove('dragging');
+    document.querySelectorAll('.drag-over-top, .drag-over-bottom').forEach(node => {
+      node.classList.remove('drag-over-top', 'drag-over-bottom');
+    });
+    if (elements.globalDragOverlay) {
+      elements.globalDragOverlay.classList.remove('active');
+    }
+    if (elements.dropZone) {
+      elements.dropZone.classList.remove('drag-over');
+    }
+    dragCounter = 0;
+  });
+
+  el.addEventListener('dragover', (e) => {
+    if (!draggedItemInfo || draggedItemInfo.type !== type) return;
+    if (draggedItemInfo.fileId === file.id) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+
+    const rect = el.getBoundingClientRect();
+    const isTopHalf = (e.clientY - rect.top) < (rect.height / 2);
+    el.classList.toggle('drag-over-top', isTopHalf);
+    el.classList.toggle('drag-over-bottom', !isTopHalf);
+  });
+
+  el.addEventListener('dragleave', () => {
+    el.classList.remove('drag-over-top', 'drag-over-bottom');
+  });
+
+  el.addEventListener('drop', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    el.classList.remove('drag-over-top', 'drag-over-bottom');
+    if (!draggedItemInfo || draggedItemInfo.type !== type) return;
+    if (draggedItemInfo.fileId === file.id) return;
+
+    const rect = el.getBoundingClientRect();
+    const insertBefore = (e.clientY - rect.top) < (rect.height / 2);
+
+    reorderFiles(draggedItemInfo.fileId, file.id, type, insertBefore, batch ? batch.id : null);
+  });
+}
+
+// 调整文件排序
+function reorderFiles(sourceId, targetId, type, insertBefore, batchId) {
+  if (sourceId === targetId) return;
+
+  // 1. 若在批次内部拖拽
+  if (batchId) {
+    const batch = state.batches.find(b => b.id === batchId);
+    if (!batch) return;
+    const list = (type === 'visual') ? batch.visualFiles : batch.audioFiles;
+    const srcIdx = list.findIndex(f => f.id === sourceId);
+    const dstIdx = list.findIndex(f => f.id === targetId);
+    if (srcIdx !== -1 && dstIdx !== -1) {
+      const [item] = list.splice(srcIdx, 1);
+      const newDstIdx = list.findIndex(f => f.id === targetId);
+      const insertAt = insertBefore ? newDstIdx : newDstIdx + 1;
+      list.splice(insertAt, 0, item);
+      DB.saveBatch(batch);
+    }
+  } else {
+    // 2. 若在平铺列表中拖拽
+    const flatList = (type === 'visual') ? state.visualFiles : state.audioFiles;
+    const srcIdx = flatList.findIndex(f => f.id === sourceId);
+    const dstIdx = flatList.findIndex(f => f.id === targetId);
+    if (srcIdx !== -1 && dstIdx !== -1) {
+      const [item] = flatList.splice(srcIdx, 1);
+      const newDstIdx = flatList.findIndex(f => f.id === targetId);
+      const insertAt = insertBefore ? newDstIdx : newDstIdx + 1;
+      flatList.splice(insertAt, 0, item);
+
+      // 同步更新所属批次内的排序
+      const srcBatch = state.batches.find(b => b.id === item.batchId);
+      if (srcBatch) {
+        const bList = (type === 'visual') ? srcBatch.visualFiles : srcBatch.audioFiles;
+        const bSrcIdx = bList.findIndex(f => f.id === sourceId);
+        if (bSrcIdx !== -1) {
+          const [bItem] = bList.splice(bSrcIdx, 1);
+          bList.push(bItem);
+          DB.saveBatch(srcBatch);
+        }
+      }
+    }
+  }
+
+  syncFlatFilesFromBatches();
+  updateDrawerLists();
+  showShortcutToast('已调整文件排序');
+}
+
 function updateDrawerLists() {
   if (elements.batchTabCount) {
     elements.batchTabCount.textContent = state.batches.length;
@@ -4390,13 +4983,18 @@ function updateDrawerLists() {
         const batchCard = document.createElement('div');
         batchCard.className = `batch-card ${batch.isCollapsed ? 'collapsed' : ''}`;
 
-        // 一级目录：批次标题栏与折叠把手
+        // 一级目录：批次标题栏、重命名与折叠把手
         const header = document.createElement('div');
         header.className = 'batch-header';
         header.innerHTML = `
           <i data-lucide="chevron-down" class="batch-chevron"></i>
           <div class="batch-info">
-            <div class="batch-title" title="${batch.name}">${batch.name}</div>
+            <div class="batch-title-row">
+              <span class="batch-title" title="双击或点击编辑图标修改批次名称">${batch.name}</span>
+              <button class="batch-rename-btn" title="修改批次名称">
+                <i data-lucide="edit-3"></i>
+              </button>
+            </div>
             <div class="batch-meta">
               <span>${batch.time}</span> ·
               <span class="meta-tag">${batch.visualFiles.length} 图/PDF</span> ·
@@ -4408,9 +5006,64 @@ function updateDrawerLists() {
           </button>
         `;
 
-        // 点击批次标题展开/收起
+        // 绑定批次重命名交互
+        const titleRow = header.querySelector('.batch-title-row');
+        const titleSpan = titleRow.querySelector('.batch-title');
+        const renameBtn = titleRow.querySelector('.batch-rename-btn');
+
+        const triggerRename = (e) => {
+          e.stopPropagation();
+          if (titleRow.querySelector('.batch-rename-input')) return;
+
+          const currentName = batch.name;
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.className = 'batch-rename-input';
+          input.value = currentName;
+
+          titleSpan.style.display = 'none';
+          renameBtn.style.display = 'none';
+          titleRow.appendChild(input);
+          input.focus();
+          input.select();
+
+          let committed = false;
+          const commit = () => {
+            if (committed) return;
+            committed = true;
+            const newName = input.value.trim();
+            if (newName && newName !== currentName) {
+              renameBatch(batch.id, newName);
+            } else {
+              titleSpan.style.display = '';
+              renameBtn.style.display = '';
+              input.remove();
+            }
+          };
+
+          input.addEventListener('keydown', (ke) => {
+            if (ke.key === 'Enter') {
+              ke.preventDefault();
+              commit();
+            } else if (ke.key === 'Escape') {
+              ke.preventDefault();
+              committed = true;
+              titleSpan.style.display = '';
+              renameBtn.style.display = '';
+              input.remove();
+            }
+          });
+
+          input.addEventListener('blur', commit);
+          input.addEventListener('click', (ke) => ke.stopPropagation());
+        };
+
+        renameBtn.addEventListener('click', triggerRename);
+        titleSpan.addEventListener('dblclick', triggerRename);
+
+        // 点击批次展开/收起（忽略卸载按钮、重命名按钮和输入框）
         header.addEventListener('click', (e) => {
-          if (e.target.closest('.batch-unload-btn')) return;
+          if (e.target.closest('.batch-unload-btn') || e.target.closest('.batch-rename-btn') || e.target.closest('.batch-rename-input')) return;
           batch.isCollapsed = !batch.isCollapsed;
           batchCard.classList.toggle('collapsed', batch.isCollapsed);
         });
@@ -4448,6 +5101,7 @@ function updateDrawerLists() {
             const itemEl = document.createElement('div');
             itemEl.className = `file-tree-item ${isCurrent ? 'active' : ''}`;
             itemEl.innerHTML = `
+              <i data-lucide="grip-vertical" class="drag-handle" title="按住拖拽排序"></i>
               <i data-lucide="${file.type === 'pdf' ? 'file-text' : 'image'}" class="file-tree-icon"></i>
               <span class="file-tree-name" title="${file.name}">${file.name}</span>
               <span class="file-tree-size">${sizeStr}</span>
@@ -4456,9 +5110,12 @@ function updateDrawerLists() {
               </button>
             `;
 
+            // 绑定拖拽排序
+            bindFileDragAndDrop(itemEl, file, batch, 'visual');
+
             // 点击切换显示
             itemEl.addEventListener('click', (e) => {
-              if (e.target.closest('.file-unload-btn')) return;
+              if (e.target.closest('.file-unload-btn') || e.target.closest('.drag-handle')) return;
               const currentIdx = state.visualFiles.findIndex(f => f.id === file.id);
               if (currentIdx !== -1) {
                 loadVisualItem(currentIdx);
@@ -4498,6 +5155,7 @@ function updateDrawerLists() {
             const itemEl = document.createElement('div');
             itemEl.className = `file-tree-item ${isCurrent ? 'active' : ''}`;
             itemEl.innerHTML = `
+              <i data-lucide="grip-vertical" class="drag-handle" title="按住拖拽排序"></i>
               <i data-lucide="music-2" class="file-tree-icon"></i>
               <span class="file-tree-name" title="${audio.name}">${audio.name}</span>
               <span class="file-tree-size">${sizeStr}</span>
@@ -4506,9 +5164,12 @@ function updateDrawerLists() {
               </button>
             `;
 
+            // 绑定拖拽排序
+            bindFileDragAndDrop(itemEl, audio, batch, 'audio');
+
             // 点击播放该音频
             itemEl.addEventListener('click', (e) => {
-              if (e.target.closest('.file-unload-btn')) return;
+              if (e.target.closest('.file-unload-btn') || e.target.closest('.drag-handle')) return;
               const currentIdx = state.audioFiles.findIndex(a => a.id === audio.id);
               if (currentIdx !== -1) {
                 prepareAudio(currentIdx);
@@ -4535,7 +5196,7 @@ function updateDrawerLists() {
     }
   }
 
-  // 2. 渲染视觉文件单项列表 (带卸载按钮)
+  // 2. 渲染视觉文件单项列表 (带拖拽与卸载按钮)
   if (state.visualFiles.length === 0) {
     elements.visualFileList.innerHTML = '<div class="empty-list-tip">暂无图片或PDF，请拖入文件夹</div>';
   } else {
@@ -4544,6 +5205,7 @@ function updateDrawerLists() {
       const item = document.createElement('div');
       item.className = `file-item ${idx === state.currentVisualIndex ? 'active' : ''}`;
       item.innerHTML = `
+        <i data-lucide="grip-vertical" class="drag-handle" title="按住拖拽排序"></i>
         <i data-lucide="${file.type === 'pdf' ? 'file-text' : 'image'}" class="file-item-icon"></i>
         <div class="file-item-info">
           <div class="file-item-name" title="${file.name}">${file.name}</div>
@@ -4553,8 +5215,11 @@ function updateDrawerLists() {
           <i data-lucide="trash-2"></i>
         </button>
       `;
+
+      bindFileDragAndDrop(item, file, null, 'visual');
+
       item.addEventListener('click', (e) => {
-        if (e.target.closest('.file-unload-btn')) return;
+        if (e.target.closest('.file-unload-btn') || e.target.closest('.drag-handle')) return;
         loadVisualItem(idx);
       });
 
@@ -4568,7 +5233,7 @@ function updateDrawerLists() {
     });
   }
 
-  // 3. 渲染音频文件单项列表 (带卸载按钮)
+  // 3. 渲染音频文件单项列表 (带拖拽与卸载按钮)
   if (state.audioFiles.length === 0) {
     elements.audioFileList.innerHTML = '<div class="empty-list-tip">暂无音频文件</div>';
   } else {
@@ -4577,6 +5242,7 @@ function updateDrawerLists() {
       const item = document.createElement('div');
       item.className = `file-item ${idx === state.currentAudioIndex ? 'active' : ''}`;
       item.innerHTML = `
+        <i data-lucide="grip-vertical" class="drag-handle" title="按住拖拽排序"></i>
         <i data-lucide="music" class="file-item-icon"></i>
         <div class="file-item-info">
           <div class="file-item-name" title="${audio.name}">${audio.name}</div>
@@ -4586,8 +5252,11 @@ function updateDrawerLists() {
           <i data-lucide="trash-2"></i>
         </button>
       `;
+
+      bindFileDragAndDrop(item, audio, null, 'audio');
+
       item.addEventListener('click', (e) => {
-        if (e.target.closest('.file-unload-btn')) return;
+        if (e.target.closest('.file-unload-btn') || e.target.closest('.drag-handle')) return;
         prepareAudio(idx);
         playAudio();
       });
@@ -4626,6 +5295,473 @@ function updateDrawerActiveState() {
     const isAudioActive = currAudio && el.getAttribute('data-file-id') === currAudio.id;
     el.classList.toggle('active', !!(isVisualActive || isAudioActive));
   });
+}
+
+// ==========================================
+// 鼠标随动幻彩丝带文字系统 (Canvas 蛇形拖曳轨迹 + 静止环形自转)
+// ==========================================
+const ribbonSystem = {
+  canvas: null,
+  ctx: null,
+  chars: [],
+  charWidths: [],
+  totalWidth: 0,
+  points: [],
+  mouseX: -999,
+  mouseY: -999,
+  lastMoveTime: 0,
+  alpha: 0,
+  isInitialized: false,
+  animationFrameId: null,
+
+  // 围绕光标旋转状态
+  orbitAngle: 0,
+  orbitFactor: 0, // 0 = 纯丝带拖曳状态, 1 = 纯围绕鼠标旋转的圆环状态
+};
+
+function isCursorAdAllowed() {
+  if (!state.cursorAdEnabled) return false;
+  // 当使用橡皮擦、文字、画笔、荧光笔等工具时，不显示动画
+  if (state.currentTool && state.currentTool !== 'select') return false;
+  // 如果画布上有文字正在输入编辑中，不显示
+  if (window.fabricCanvas && fabricCanvas.getActiveObject && fabricCanvas.getActiveObject()) {
+    const activeObj = fabricCanvas.getActiveObject();
+    if (activeObj && activeObj.isEditing) return false;
+  }
+  // 如果焦点在输入框/文本域中，不显示
+  const activeEl = document.activeElement;
+  if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable)) {
+    return false;
+  }
+  return true;
+}
+
+function initCursorRibbonCanvas() {
+  ribbonSystem.canvas = document.getElementById('cursorRibbonCanvas');
+  if (!ribbonSystem.canvas) return;
+  ribbonSystem.ctx = ribbonSystem.canvas.getContext('2d');
+
+  function resizeCanvas() {
+    if (!ribbonSystem.canvas) return;
+    ribbonSystem.canvas.width = window.innerWidth;
+    ribbonSystem.canvas.height = window.innerHeight;
+  }
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+
+  updateRibbonText(state.cursorAdText || '主讲人：人在葡萄牙 · YouTube');
+
+  if (!ribbonSystem.isInitialized) {
+    ribbonSystem.isInitialized = true;
+    requestAnimationFrame(renderCursorRibbon);
+  }
+}
+
+function updateRibbonText(text) {
+  const str = (text && text.trim()) ? text.trim() : '主讲人 · 欢迎咨询';
+  ribbonSystem.chars = Array.from(str);
+  ribbonSystem.charWidths = [];
+  ribbonSystem.totalWidth = 0;
+
+  const testCanvas = ribbonSystem.canvas || document.createElement('canvas');
+  const tCtx = testCanvas.getContext('2d');
+  tCtx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", sans-serif';
+
+  for (let i = 0; i < ribbonSystem.chars.length; i++) {
+    const w = Math.max(9, tCtx.measureText(ribbonSystem.chars[i]).width);
+    ribbonSystem.charWidths.push(w);
+    ribbonSystem.totalWidth += w;
+  }
+
+  const N = ribbonSystem.chars.length;
+  while (ribbonSystem.points.length < N) {
+    ribbonSystem.points.push({
+      x: ribbonSystem.mouseX > 0 ? ribbonSystem.mouseX : window.innerWidth / 2,
+      y: ribbonSystem.mouseY > 0 ? ribbonSystem.mouseY : window.innerHeight / 2,
+      angle: 0
+    });
+  }
+  if (ribbonSystem.points.length > N) {
+    ribbonSystem.points.length = N;
+  }
+}
+
+function renderCursorRibbon(timestamp) {
+  const { canvas, ctx, chars, charWidths, totalWidth, points } = ribbonSystem;
+
+  if (!canvas || !ctx) {
+    requestAnimationFrame(renderCursorRibbon);
+    return;
+  }
+
+  const N = chars.length;
+  const isAllowed = isCursorAdAllowed();
+  const timeSinceLastMove = timestamp - ribbonSystem.lastMoveTime;
+  // 鼠标移动中判定 (130ms 内有连续动作)
+  const isMouseMoving = timeSinceLastMove < 130 && ribbonSystem.mouseX > 0 && ribbonSystem.mouseY > 0;
+  const hasMousePosition = ribbonSystem.mouseX > 0 && ribbonSystem.mouseY > 0;
+
+  // 只要处于允许状态且鼠标在视口内，透明度淡入
+  if (isAllowed && hasMousePosition) {
+    ribbonSystem.alpha = Math.min(1, ribbonSystem.alpha + 0.12);
+  } else {
+    ribbonSystem.alpha = Math.max(0, ribbonSystem.alpha - 0.08);
+  }
+
+  // 状态平滑过渡：移动时恢复丝带形态(orbitFactor -> 0)，停止运动时平滑聚拢成围绕鼠标转圈的圆环(orbitFactor -> 1)
+  if (isMouseMoving) {
+    ribbonSystem.orbitFactor = Math.max(0, ribbonSystem.orbitFactor - 0.08);
+  } else if (hasMousePosition) {
+    ribbonSystem.orbitFactor = Math.min(1, ribbonSystem.orbitFactor + 0.045);
+  }
+
+  // 持续推进圆环自转角度 (顺时针缓慢悠扬旋转)
+  ribbonSystem.orbitAngle = (ribbonSystem.orbitAngle + 0.018) % (Math.PI * 2);
+
+  // 清空画布 (全穿透无残留)
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (ribbonSystem.alpha > 0.01 && N > 0 && points.length === N) {
+    // 1. 丝带物理动力学平滑计算
+    const headTargetX = ribbonSystem.mouseX + 14;
+    const headTargetY = ribbonSystem.mouseY + 14;
+
+    points[0].x += (headTargetX - points[0].x) * 0.45;
+    points[0].y += (headTargetY - points[0].y) * 0.45;
+
+    for (let i = 1; i < N; i++) {
+      const prev = points[i - 1];
+      const curr = points[i];
+
+      curr.x += (prev.x - curr.x) * 0.38;
+      curr.y += (prev.y - curr.y) * 0.38;
+
+      const dx = curr.x - prev.x;
+      const dy = curr.y - prev.y;
+      const dist = Math.hypot(dx, dy) || 0.001;
+      const spacing = (charWidths[i - 1] + charWidths[i]) * 0.5 + 2.5;
+
+      if (dist > spacing * 1.8) {
+        curr.x = prev.x + (dx / dist) * spacing * 1.8;
+        curr.y = prev.y + (dy / dist) * spacing * 1.8;
+      }
+
+      curr.angle = Math.atan2(dy, dx);
+    }
+
+    // 2. 计算圆圈大小 (周长依据文字总长度与文字数量动态确定，文字多圆圈大)
+    const targetCircumference = (totalWidth || N * 13) + N * 2.8;
+    // 最小半径 32px (确保圆心留有足够空间容纳鼠标箭头光标)
+    const orbitRadius = Math.max(32, targetCircumference / (2 * Math.PI));
+
+    const factor = ribbonSystem.orbitFactor; // 0 = 纯丝带, 1 = 纯圆环
+
+    // 绘制纯净幻彩文字（完全去掉阴影，不需要发光光晕）
+    ctx.save();
+    ctx.globalAlpha = ribbonSystem.alpha;
+    ctx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowBlur = 0;
+    ctx.shadowColor = 'transparent';
+
+    const baseHue = (timestamp * 0.09) % 360;
+
+    // 从后往前绘制字符
+    for (let i = N - 1; i >= 0; i--) {
+      const pt = points[i];
+
+      // 圆环模式下的圆周理论坐标与切线角度
+      const charAngle = ribbonSystem.orbitAngle + i * (2 * Math.PI / N);
+      const circleX = ribbonSystem.mouseX + orbitRadius * Math.cos(charAngle);
+      const circleY = ribbonSystem.mouseY + orbitRadius * Math.sin(charAngle);
+      const circleTangent = charAngle + Math.PI / 2;
+
+      // 丝带模式下的微波浪倾斜角度
+      const ribbonTilt = Math.max(-0.48, Math.min(0.48, Math.sin(pt.angle) * 0.45));
+
+      // 根据 factor 平滑混合当前字符的实际绘制位置与旋转角度
+      const drawX = pt.x * (1 - factor) + circleX * factor;
+      const drawY = pt.y * (1 - factor) + circleY * factor;
+      const drawAngle = ribbonTilt * (1 - factor) + circleTangent * factor;
+
+      const charHue = (baseHue + i * (360 / Math.max(1, N))) % 360;
+      ctx.fillStyle = `hsl(${charHue}, 100%, 62%)`;
+
+      ctx.save();
+      ctx.translate(drawX, drawY);
+      ctx.rotate(drawAngle);
+      ctx.fillText(chars[i], 0, 0);
+      ctx.restore();
+    }
+
+    ctx.restore();
+  }
+
+  // 绘制窗口边缘环绕幻彩走马灯 (若已开启)
+  renderWindowMarquee(ctx, canvas, timestamp);
+
+  requestAnimationFrame(renderCursorRibbon);
+}
+
+// ==========================================
+// ==========================================
+// 窗口边缘走马灯管理 (四屏衔接规则体系)
+// 四条边如四个独立显示屏，衔接时接力启动，各边具备专属显示规则：
+// 1. 顶边屏幕：正常阅读顺序(正立)，从右向左平移 (A在前，G在后)
+// 2. 左边屏幕：顶端文字直接逆时针旋转90度继续走，向下平移 (A在前在下，G在后在上)
+// 3. 底边屏幕：正常阅读顺序不变(正立)，从左向右平移 (段落结尾G最先出现，最后出现A)
+// 4. 右边屏幕：底边文字直接逆时针旋转90度继续走，向上平移 (G在前在上，A在后在下)
+//    走到右上角后，顶边屏幕重新启动，呈现正常语句顺序
+// ==========================================
+const marqueeSystem = {
+  offset: 0,
+  chars: [],
+  charOffsets: [],
+  totalLength: 0,
+};
+
+function updateMarqueeCache() {
+  const baseText = (state.cursorAdText && state.cursorAdText.trim()) 
+    ? state.cursorAdText.trim() 
+    : '主讲人 · 欢迎咨询';
+  marqueeSystem.chars = Array.from(baseText);
+  marqueeSystem.charOffsets = [];
+
+  const testCanvas = ribbonSystem.canvas || document.createElement('canvas');
+  const tCtx = testCanvas.getContext('2d');
+  tCtx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", sans-serif';
+
+  let currentDist = 0;
+  for (let i = 0; i < marqueeSystem.chars.length; i++) {
+    const w = Math.max(12, tCtx.measureText(marqueeSystem.chars[i]).width);
+    const centerOffset = currentDist + w * 0.5;
+    marqueeSystem.charOffsets.push(centerOffset);
+    currentDist += w + 3; // 字符之间预留 3px 优雅间距
+  }
+  marqueeSystem.totalLength = Math.max(currentDist - 3, 10);
+}
+
+function renderWindowMarquee(ctx, canvas, timestamp) {
+  if (!state.windowMarqueeEnabled) return;
+
+  const W = canvas.width;
+  const H = canvas.height;
+  const m = 14; // 贴紧窗口边缘内侧 14px
+  if (W <= 120 || H <= 120) return;
+
+  if (!marqueeSystem.chars || marqueeSystem.chars.length === 0) {
+    updateMarqueeCache();
+  }
+  const { chars, charOffsets, totalLength } = marqueeSystem;
+  const N = chars.length;
+  if (N === 0) return;
+
+  const X_min = m;
+  const X_max = W - m;
+  const Y_min = m;
+  const Y_max = H - m;
+
+  const Wspan = Math.max(10, X_max - X_min);
+  const Hspan = Math.max(10, Y_max - Y_min);
+  const L = totalLength;
+
+  // ─────────────────────────────────────────────────────────────────
+  // 首字触发链式衔接规则
+  // 各边完整行程（首字入场到尾字离场）
+  const D_top    = Wspan + L;
+  const D_left   = Hspan + L;
+  const D_bottom = Wspan + L;
+  const D_right  = Hspan + L;
+
+  // 首字偏移量（chars[0] 中心距起始端的距离）
+  const ch0 = charOffsets.length > 0 ? charOffsets[0] : 0;
+
+  // 各边首字从入口走到出口的行程（即触发下一屏的时刻）
+  const triggerW = Wspan + ch0; // 顶/底边
+  const triggerH = Hspan + ch0; // 左/右边
+
+  // 各屏幕的相对启动时间节点
+  const t_top    = 0;
+  const t_left   = t_top    + triggerW; // 顶边首字触左角 → 左边启动
+  const t_bottom = t_left   + triggerH; // 左边首字触底角 → 底边启动
+  const t_right  = t_bottom + triggerW; // 底边首字触右角 → 右边启动
+  const totalPeriod = t_right + D_right;
+
+  marqueeSystem.offset = (marqueeSystem.offset + 0.55) % totalPeriod;
+  const cur = marqueeSystem.offset;
+
+  // 幻彩流光色彩基准
+  const baseHue = (timestamp * 0.05) % 360;
+
+  ctx.save();
+  ctx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.shadowBlur = 0;
+  ctx.shadowColor = 'transparent';
+
+  // ── 屏幕1：顶边 右→左 正立 ──────────────────────────────────────
+  {
+    const s = cur;
+    if (s >= 0 && s < D_top) {
+      const xStart = X_max - s;
+      ctx.save();
+      ctx.beginPath(); ctx.rect(X_min, Y_min - 16, Wspan, 32); ctx.clip();
+      for (let i = 0; i < N; i++) {
+        const charHue = (baseHue + (i / N) * 120) % 360;
+        ctx.fillStyle = `hsl(${charHue}, 100%, 65%)`;
+        ctx.fillText(chars[i], xStart + charOffsets[i], Y_min);
+      }
+      ctx.restore();
+    }
+  }
+
+  // ── 屏幕2：左边 上→下 逆时针90° ──────────────────────────────────
+  {
+    const s = cur - t_left;
+    if (s >= 0 && s < D_left) {
+      const yFront = Y_min + s;
+      ctx.save();
+      ctx.beginPath(); ctx.rect(X_min - 16, Y_min, 32, Hspan); ctx.clip();
+      for (let i = 0; i < N; i++) {
+        const charHue = (baseHue + (i / N) * 120) % 360;
+        ctx.fillStyle = `hsl(${charHue}, 100%, 65%)`;
+        ctx.save();
+        ctx.translate(X_min, yFront - charOffsets[i]);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillText(chars[i], 0, 0);
+        ctx.restore();
+      }
+      ctx.restore();
+    }
+  }
+
+  // ── 屏幕3：底边 左→右 正立 ──────────────────────────────────────
+  {
+    const s = cur - t_bottom;
+    if (s >= 0 && s < D_bottom) {
+      const xStart = (X_min - L) + s;
+      ctx.save();
+      ctx.beginPath(); ctx.rect(X_min, Y_max - 16, Wspan, 32); ctx.clip();
+      for (let i = 0; i < N; i++) {
+        const charHue = (baseHue + (i / N) * 120) % 360;
+        ctx.fillStyle = `hsl(${charHue}, 100%, 65%)`;
+        ctx.fillText(chars[i], xStart + charOffsets[i], Y_max);
+      }
+      ctx.restore();
+    }
+  }
+
+  // ── 屏幕4：右边 下→上 逆时针90° ──────────────────────────────────
+  {
+    const s = cur - t_right;
+    if (s >= 0 && s < D_right) {
+      const yBack = Y_max - s + L;
+      ctx.save();
+      ctx.beginPath(); ctx.rect(X_max - 16, Y_min, 32, Hspan); ctx.clip();
+      for (let i = 0; i < N; i++) {
+        const charHue = (baseHue + (i / N) * 120) % 360;
+        ctx.fillStyle = `hsl(${charHue}, 100%, 65%)`;
+        ctx.save();
+        ctx.translate(X_max, yBack - charOffsets[i]);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillText(chars[i], 0, 0);
+        ctx.restore();
+      }
+      ctx.restore();
+    }
+  }
+
+  ctx.restore();
+}
+
+function initCursorAd() {
+  if (!elements.cursorRibbonCanvas) {
+    elements.cursorRibbonCanvas = document.getElementById('cursorRibbonCanvas');
+  }
+  if (!elements.cursorAdToggleCheckbox) {
+    elements.cursorAdToggleCheckbox = document.getElementById('cursorAdToggleCheckbox');
+  }
+  if (!elements.windowMarqueeToggleCheckbox) {
+    elements.windowMarqueeToggleCheckbox = document.getElementById('windowMarqueeToggleCheckbox');
+  }
+  if (!elements.cursorAdTextInput) {
+    elements.cursorAdTextInput = document.getElementById('cursorAdTextInput');
+  }
+  if (!elements.cursorAdSettingBox) {
+    elements.cursorAdSettingBox = document.getElementById('cursorAdSettingBox');
+  }
+
+  try {
+    const savedEnabled = localStorage.getItem('meet_cursor_ad_enabled');
+    const savedMarquee = localStorage.getItem('meet_window_marquee_enabled');
+    const savedText = localStorage.getItem('meet_cursor_ad_text');
+    if (savedEnabled !== null) {
+      state.cursorAdEnabled = (savedEnabled === '1');
+    }
+    if (savedMarquee !== null) {
+      state.windowMarqueeEnabled = (savedMarquee === '1');
+    }
+    if (savedText !== null && savedText.trim() !== '') {
+      state.cursorAdText = savedText;
+    }
+  } catch (_) {}
+
+  if (elements.cursorAdToggleCheckbox) {
+    elements.cursorAdToggleCheckbox.checked = state.cursorAdEnabled;
+  }
+  if (elements.windowMarqueeToggleCheckbox) {
+    elements.windowMarqueeToggleCheckbox.checked = state.windowMarqueeEnabled;
+  }
+  if (elements.cursorAdTextInput) {
+    elements.cursorAdTextInput.value = state.cursorAdText;
+  }
+
+  initCursorRibbonCanvas();
+  updateMarqueeCache();
+}
+
+function setCursorAdEnabled(enabled) {
+  state.cursorAdEnabled = enabled;
+  if (elements.cursorAdToggleCheckbox) {
+    elements.cursorAdToggleCheckbox.checked = enabled;
+  }
+  if (!enabled && !state.windowMarqueeEnabled) {
+    ribbonSystem.alpha = 0;
+    if (ribbonSystem.ctx && ribbonSystem.canvas) {
+      ribbonSystem.ctx.clearRect(0, 0, ribbonSystem.canvas.width, ribbonSystem.canvas.height);
+    }
+  }
+  try {
+    localStorage.setItem('meet_cursor_ad_enabled', enabled ? '1' : '0');
+  } catch (_) {}
+  showShortcutToast(enabled ? '已开启鼠标随动丝带幻彩文字' : '已关闭鼠标随动丝带文字');
+}
+
+function setWindowMarqueeEnabled(enabled) {
+  state.windowMarqueeEnabled = enabled;
+  if (elements.windowMarqueeToggleCheckbox) {
+    elements.windowMarqueeToggleCheckbox.checked = enabled;
+  }
+  if (!enabled && !state.cursorAdEnabled) {
+    if (ribbonSystem.ctx && ribbonSystem.canvas) {
+      ribbonSystem.ctx.clearRect(0, 0, ribbonSystem.canvas.width, ribbonSystem.canvas.height);
+    }
+  }
+  try {
+    localStorage.setItem('meet_window_marquee_enabled', enabled ? '1' : '0');
+  } catch (_) {}
+  showShortcutToast(enabled ? '已开启窗口边缘走马灯' : '已关闭窗口边缘走马灯');
+}
+
+function setCursorAdText(text) {
+  state.cursorAdText = text;
+  updateRibbonText(text);
+  updateMarqueeCache();
+  try {
+    localStorage.setItem('meet_cursor_ad_text', text);
+  } catch (_) {}
 }
 
 // 启动
