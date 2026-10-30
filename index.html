@@ -420,6 +420,57 @@ button {
   z-index: 99999;
 }
 
+/* 全屏静默录屏虚线边框指示器 (全事件穿透，绝无任何文字与小红点录入) */
+#screenRecordOutline {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  box-sizing: border-box;
+  pointer-events: none !important;
+  z-index: 999998;
+  display: none;
+  transition: border-color 0.25s ease;
+}
+#screenRecordOutline.recording {
+  display: block;
+  border: 4px dashed rgba(59, 130, 246, 0.9); /* 录制中：科技蓝虚线框 */
+}
+#screenRecordOutline.paused {
+  display: block;
+  border: 4px dashed rgba(245, 158, 11, 0.95); /* 暂停中：琥珀黄虚线框 */
+}
+
+/* 录屏快捷键按钮样式 */
+.shortcut-key-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #93c5fd;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.shortcut-key-btn:hover {
+  background: rgba(37, 99, 235, 0.35);
+  border-color: #60a5fa;
+  color: #ffffff;
+}
+.shortcut-key-btn.listening {
+  background: #2563eb !important;
+  border-color: #93c5fd !important;
+  color: #ffffff !important;
+  animation: pulseKeyBtn 0.8s infinite alternate;
+}
+@keyframes pulseKeyBtn {
+  from { transform: scale(0.97); opacity: 0.7; }
+  to { transform: scale(1.03); opacity: 1; }
+}
+
 .dropdown-item {
   display: flex;
   align-items: center;
@@ -1701,6 +1752,8 @@ textarea.fabric-textarea,
 <body>
   <!-- 鼠标随动幻彩丝带文字 Canvas (全事件穿透) -->
   <canvas id="cursorRibbonCanvas"></canvas>
+  <!-- 全屏录屏静默提示虚线框 (全事件穿透、极简静默指示) -->
+  <div id="screenRecordOutline"></div>
 
   <div id="app" class="app-container">
     
@@ -1776,6 +1829,31 @@ textarea.fabric-textarea,
                 </label>
               </div>
               <input type="text" class="cursor-ad-input" id="cursorAdTextInput" placeholder="输入跟随文字，如：主讲人 · 欢迎咨询" value="主讲人 · 欢迎咨询">
+            </div>
+
+            <div class="settings-menu-divider"></div>
+
+            <div class="settings-menu-group-title">静默录屏设置 (双路混音)</div>
+            <div class="cursor-ad-setting-box">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
+                <span style="font-size:12px; color:var(--text-muted);">开始 / 停止快捷键:</span>
+                <button class="shortcut-key-btn" id="shortcutStartBtn" title="点击后按下键盘按键即可自定义设置">F5</button>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
+                <span style="font-size:12px; color:var(--text-muted);">暂停 / 继续快捷键:</span>
+                <button class="shortcut-key-btn" id="shortcutPauseBtn" title="点击后按下键盘按键即可自定义设置">F7</button>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:12px; color:var(--text-muted);">存储路径:</span>
+                <button class="shortcut-key-btn" id="setSaveDirBtn" style="max-width:130px; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;" title="点击设置录屏自动静默保存文件夹">默认(下载)</button>
+              </div>
+              <div style="margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.08);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 4px;">
+                  <span style="font-size:12px; color:var(--text-muted);">🎙️ 麦克风增强:</span>
+                  <span id="micVolumeValue" style="font-size:11px; font-weight:600; color:#60a5fa;">250%</span>
+                </div>
+                <input type="range" id="micVolumeSlider" min="100" max="500" step="10" value="250" style="width:100%; accent-color:#3b82f6; cursor:pointer;" title="调整麦克风音量增益，解决人声比桌面声音小的问题">
+              </div>
             </div>
 
             <div class="settings-menu-divider"></div>
@@ -2571,6 +2649,8 @@ async function init() {
   setupFloatingPlayerDrag();
   setupKeyboardShortcuts();
   initFabricCanvas();
+  // 初始化静默录屏配置与持久化存储
+  ScreenRecorder.init();
   // 页面加载后等待5秒无交互自动收缩为悬浮圆形图标
   scheduleCollapse();
 
@@ -4471,10 +4551,451 @@ function setupFloatingPlayerDrag() {
 }
 
 // ==========================================
-// 快捷键系统 (F1-F4, 方向键)
+// 静默录屏引擎 (双路混音 + 全屏虚线边框 + 自定义快捷键 + 静默保存)
+// ==========================================
+const ScreenRecorder = {
+  isRecording: false,
+  isPaused: false,
+  mediaRecorder: null,
+  audioContext: null,
+  activeStreams: [],
+  recordedChunks: [],
+  dirHandle: null,
+  keyStart: 'F5',
+  keyPause: 'F7',
+  micGainValue: 2.5, // 默认 250% 增益 (+8dB)，平衡桌面与人声音量
+  listeningTarget: null, // 'start' | 'pause' | null
+
+  // 初始化设置与目录句柄读取
+  async init() {
+    try {
+      const savedStart = localStorage.getItem('meet_rec_key_start');
+      if (savedStart) this.keyStart = savedStart;
+      const savedPause = localStorage.getItem('meet_rec_key_pause');
+      if (savedPause) this.keyPause = savedPause;
+      const savedMicGain = localStorage.getItem('meet_rec_mic_gain');
+      if (savedMicGain) this.micGainValue = parseFloat(savedMicGain) || 2.5;
+    } catch (_) {}
+
+    // 读取持久化文件夹句柄 (IndexedDB)
+    this.restoreDirHandle();
+
+    // 更新界面展示
+    this.updateUI();
+    this.bindEvents();
+  },
+
+  updateUI() {
+    const btnStart = document.getElementById('shortcutStartBtn');
+    const btnPause = document.getElementById('shortcutPauseBtn');
+    const btnDir = document.getElementById('setSaveDirBtn');
+    const micSlider = document.getElementById('micVolumeSlider');
+    const micValue = document.getElementById('micVolumeValue');
+    if (btnStart) btnStart.textContent = this.keyStart;
+    if (btnPause) btnPause.textContent = this.keyPause;
+    if (btnDir) {
+      btnDir.textContent = this.dirHandle ? `📁 ${this.dirHandle.name}` : '默认(下载)';
+      btnDir.title = this.dirHandle ? `自动保存至: ${this.dirHandle.name}` : '点击选择录屏自动保存文件夹';
+    }
+    if (micSlider) micSlider.value = Math.round(this.micGainValue * 100);
+    if (micValue) micValue.textContent = `${Math.round(this.micGainValue * 100)}%`;
+  },
+
+  bindEvents() {
+    const btnStart = document.getElementById('shortcutStartBtn');
+    const btnPause = document.getElementById('shortcutPauseBtn');
+    const btnDir = document.getElementById('setSaveDirBtn');
+    const micSlider = document.getElementById('micVolumeSlider');
+    const micValue = document.getElementById('micVolumeValue');
+
+    if (btnStart) {
+      btnStart.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.startListeningKey('start', btnStart);
+      });
+    }
+    if (btnPause) {
+      btnPause.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.startListeningKey('pause', btnPause);
+      });
+    }
+    if (btnDir) {
+      btnDir.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        await this.selectSaveDirectory();
+      });
+    }
+    if (micSlider) {
+      micSlider.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value, 10) || 250;
+        this.micGainValue = val / 100;
+        if (micValue) micValue.textContent = `${val}%`;
+        try { localStorage.setItem('meet_rec_mic_gain', this.micGainValue.toString()); } catch (_) {}
+      });
+    }
+  },
+
+  startListeningKey(type, btnEl) {
+    this.listeningTarget = type;
+    btnEl.classList.add('listening');
+    btnEl.textContent = '请按键...';
+
+    const handler = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // 规范键名
+      let keyName = e.key;
+      if (keyName === ' ') keyName = 'Space';
+      if (keyName.length === 1) keyName = keyName.toUpperCase();
+
+      if (type === 'start') {
+        this.keyStart = keyName;
+        try { localStorage.setItem('meet_rec_key_start', keyName); } catch (_) {}
+      } else if (type === 'pause') {
+        this.keyPause = keyName;
+        try { localStorage.setItem('meet_rec_key_pause', keyName); } catch (_) {}
+      }
+
+      btnEl.classList.remove('listening');
+      btnEl.textContent = keyName;
+      this.listeningTarget = null;
+      window.removeEventListener('keydown', handler, true);
+    };
+
+    window.addEventListener('keydown', handler, true);
+  },
+
+  async selectSaveDirectory() {
+    if (!window.showDirectoryPicker) {
+      alert('当前浏览器环境不支持直接选择文件夹，录像将自动保存到浏览器默认下载路径。');
+      return;
+    }
+    try {
+      const handle = await window.showDirectoryPicker();
+      if (handle) {
+        this.dirHandle = handle;
+        this.saveDirHandle(handle);
+        this.updateUI();
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        console.warn('选择目录异常', err);
+      }
+    }
+  },
+
+  // IndexedDB 存储与恢复目录句柄
+  saveDirHandle(handle) {
+    try {
+      const request = indexedDB.open('MeetPresenterRecDB', 1);
+      request.onupgradeneeded = (e) => {
+        e.target.result.createObjectStore('settings');
+      };
+      request.onsuccess = (e) => {
+        const db = e.target.result;
+        const tx = db.transaction('settings', 'readwrite');
+        tx.objectStore('settings').put(handle, 'saveDirHandle');
+      };
+    } catch (_) {}
+  },
+
+  restoreDirHandle() {
+    try {
+      if (!window.indexedDB) return;
+      const request = indexedDB.open('MeetPresenterRecDB', 1);
+      request.onupgradeneeded = (e) => {
+        e.target.result.createObjectStore('settings');
+      };
+      request.onsuccess = (e) => {
+        const db = e.target.result;
+        const tx = db.transaction('settings', 'readonly');
+        const getReq = tx.objectStore('settings').get('saveDirHandle');
+        getReq.onsuccess = () => {
+          if (getReq.result) {
+            this.dirHandle = getReq.result;
+            this.updateUI();
+          }
+        };
+      };
+    } catch (_) {}
+  },
+
+  // 快捷键按键匹配判定
+  isKeyMatch(e, configuredKey) {
+    if (!configuredKey) return false;
+    const cfg = configuredKey.trim().toUpperCase();
+    const pressKey = (e.key || '').trim().toUpperCase();
+    const pressCode = (e.code || '').trim().toUpperCase();
+
+    if (cfg === pressKey || cfg === pressCode) return true;
+    if (cfg === 'SPACE' && (pressKey === ' ' || pressCode === 'SPACE')) return true;
+    if (pressCode === 'KEY' + cfg) return true;
+    if (pressCode === 'DIGIT' + cfg) return true;
+    return false;
+  },
+
+  // 开始录制
+  async start() {
+    if (this.isRecording) return;
+
+    try {
+      // 1. 调起屏幕共享 (提示用户选择展示屏幕并勾选共享系统音频)
+      const displayStream = await navigator.mediaDevices.getDisplayMedia({
+        video: {
+          displaySurface: 'monitor',
+          frameRate: { ideal: 60, max: 60 }
+        },
+        audio: true
+      });
+
+      // 2. 调起麦克风 (开启底层硬件级自动增益与降噪)
+      let micStream = null;
+      try {
+        micStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true // 开启浏览器硬件级自动增益补偿
+          }
+        });
+      } catch (err) {
+        console.warn('麦克风获取未就绪，将只录制桌面声音:', err);
+      }
+
+      this.activeStreams = [displayStream];
+      if (micStream) this.activeStreams.push(micStream);
+
+      // 3. Web Audio API 双路音频混音 (桌面全局声音 + 麦克风独立增益放大)
+      const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+      this.audioContext = new AudioCtxClass();
+      const dest = this.audioContext.createMediaStreamDestination();
+
+      // 接入桌面扬声器声音 (保持高保真，并稍加平衡)
+      const sysTracks = displayStream.getAudioTracks();
+      if (sysTracks.length > 0) {
+        const sysSource = this.audioContext.createMediaStreamSource(new MediaStream(sysTracks));
+        const sysGain = this.audioContext.createGain();
+        sysGain.gain.value = 0.95; // 略微留出 5% 动态余量给麦克风人声
+        sysSource.connect(sysGain);
+        sysGain.connect(dest);
+      }
+
+      // 接入麦克风声音 (独立 GainNode 数字增强放大 + 动态压限防爆音)
+      if (micStream && micStream.getAudioTracks().length > 0) {
+        const micSource = this.audioContext.createMediaStreamSource(micStream);
+        const micGain = this.audioContext.createGain();
+        micGain.gain.value = this.micGainValue || 2.5; // 应用用户设置的增益倍数 (默认250%)
+
+        // 动态压限器: 保证小声能听清，大声喊叫时平滑限幅不破音
+        const compressor = this.audioContext.createDynamicsCompressor();
+        compressor.threshold.setValueAtTime(-18, this.audioContext.currentTime);
+        compressor.knee.setValueAtTime(20, this.audioContext.currentTime);
+        compressor.ratio.setValueAtTime(4, this.audioContext.currentTime);
+        compressor.attack.setValueAtTime(0.005, this.audioContext.currentTime);
+        compressor.release.setValueAtTime(0.05, this.audioContext.currentTime);
+
+        micSource.connect(micGain);
+        micGain.connect(compressor);
+        compressor.connect(dest);
+      }
+
+      // 4. 合成最终多媒体流 (画面 + 混音音频)
+      const finalTracks = [
+        ...displayStream.getVideoTracks(),
+        ...dest.stream.getAudioTracks()
+      ];
+      const combinedStream = new MediaStream(finalTracks);
+
+      // 5. 格式协商 (优先 mp4，其次 webm)
+      const mimeTypes = [
+        'video/mp4;codecs=avc1,mp4a.40.2',
+        'video/mp4',
+        'video/webm;codecs=vp9,opus',
+        'video/webm;codecs=vp8,opus',
+        'video/webm'
+      ];
+      let selectedMimeType = '';
+      for (const m of mimeTypes) {
+        if (MediaRecorder.isTypeSupported(m)) {
+          selectedMimeType = m;
+          break;
+        }
+      }
+
+      const recorderOptions = selectedMimeType ? { mimeType: selectedMimeType } : {};
+      this.mediaRecorder = new MediaRecorder(combinedStream, recorderOptions);
+      this.recordedChunks = [];
+
+      this.mediaRecorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) {
+          this.recordedChunks.push(e.data);
+        }
+      };
+
+      this.mediaRecorder.onstop = () => {
+        this.finishAndSave(selectedMimeType);
+      };
+
+      // 监听用户点击浏览器底部浮动的“停止共享”
+      displayStream.getVideoTracks()[0].addEventListener('ended', () => {
+        if (this.isRecording) {
+          this.stop();
+        }
+      });
+
+      // 启动数据分片录制 (每秒切片一次，保障数据安全)
+      this.mediaRecorder.start(1000);
+      this.isRecording = true;
+      this.isPaused = false;
+
+      // 仅显示虚线边框，没有任何多余 UI 录入画面
+      const outline = document.getElementById('screenRecordOutline');
+      if (outline) outline.className = 'recording';
+
+    } catch (err) {
+      if (err.name !== 'NotAllowedError') {
+        console.error('启动录屏失败', err);
+      }
+      this.cleanUp();
+    }
+  },
+
+  // 暂停 / 继续录制
+  togglePause() {
+    if (!this.isRecording || !this.mediaRecorder) return;
+
+    const outline = document.getElementById('screenRecordOutline');
+    if (!this.isPaused) {
+      this.mediaRecorder.pause();
+      this.isPaused = true;
+      if (outline) outline.className = 'paused'; // 边框变为琥珀黄，静默提示暂停
+    } else {
+      this.mediaRecorder.resume();
+      this.isPaused = false;
+      if (outline) outline.className = 'recording'; // 边框变回科技蓝，提示继续录制
+    }
+  },
+
+  // 停止录制
+  stop() {
+    if (!this.isRecording) return;
+    this.isRecording = false;
+    this.isPaused = false;
+
+    const outline = document.getElementById('screenRecordOutline');
+    if (outline) outline.className = '';
+
+    if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+      this.mediaRecorder.stop();
+    }
+  },
+
+  cleanUp() {
+    this.isRecording = false;
+    this.isPaused = false;
+    const outline = document.getElementById('screenRecordOutline');
+    if (outline) outline.className = '';
+
+    // 释放所有媒体轨道
+    this.activeStreams.forEach((stream) => {
+      try {
+        stream.getTracks().forEach((track) => track.stop());
+      } catch (_) {}
+    });
+    this.activeStreams = [];
+
+    if (this.audioContext && this.audioContext.state !== 'closed') {
+      try { this.audioContext.close(); } catch (_) {}
+    }
+    this.audioContext = null;
+  },
+
+  // 结束并自动静默保存 (按时间命名)
+  async finishAndSave(mimeType) {
+    const isMp4 = mimeType.includes('mp4');
+    const ext = isMp4 ? 'mp4' : 'webm';
+    const blob = new Blob(this.recordedChunks, { type: mimeType || 'video/webm' });
+    this.cleanUp();
+
+    // 时间格式化: 录屏_2026-10-30_22-50-30
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    const dateStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    const timeStr = `${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+    const filename = `录屏_${dateStr}_${timeStr}.${ext}`;
+
+    // 1. 如果已配置持久化保存目录且有权限，直接静默落盘写入
+    if (this.dirHandle) {
+      try {
+        let hasPermission = false;
+        if (this.dirHandle.queryPermission) {
+          const status = await this.dirHandle.queryPermission({ mode: 'readwrite' });
+          if (status === 'granted') hasPermission = true;
+          else {
+            const req = await this.dirHandle.requestPermission({ mode: 'readwrite' });
+            if (req === 'granted') hasPermission = true;
+          }
+        } else {
+          hasPermission = true;
+        }
+
+        if (hasPermission) {
+          const fileHandle = await this.dirHandle.getFileHandle(filename, { create: true });
+          const writable = await fileHandle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+          return;
+        }
+      } catch (err) {
+        console.warn('静默保存至指定文件夹失败，回退至原生下载', err);
+      }
+    }
+
+    // 2. 默认降级：通过浏览器自动静默下载
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 1500);
+  }
+};
+
+// ==========================================
+// 快捷键系统 (F1-F4, 方向键, 录屏控制)
 // ==========================================
 function setupKeyboardShortcuts() {
   window.addEventListener('keydown', (e) => {
+    // 优先响应录屏快捷键 (静默拦截，阻止浏览器 F5 刷新或 F7 光标浏览等默认行为)
+    if (!ScreenRecorder.listeningTarget) {
+      if (ScreenRecorder.isKeyMatch(e, ScreenRecorder.keyStart)) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!ScreenRecorder.isRecording) {
+          ScreenRecorder.start();
+        } else {
+          ScreenRecorder.stop();
+        }
+        return;
+      }
+
+      if (ScreenRecorder.isKeyMatch(e, ScreenRecorder.keyPause)) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (ScreenRecorder.isRecording) {
+          ScreenRecorder.togglePause();
+        }
+        return;
+      }
+    }
+
     // 锁定全局快捷键：以下任意情况均完全屏蔽，避免方向键/F键等误触发翻页/滚动/跳曲
     const activeEl = document.activeElement;
     const isFocusedOnInput =
