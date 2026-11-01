@@ -409,8 +409,8 @@ button {
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
 }
 
-/* 鼠标随动丝带文字 Canvas 画布 (全屏覆盖、全事件穿透) */
-#cursorRibbonCanvas {
+/* 低功耗防录屏：纯文字丝带拖曳 + 静止环绕系统 (纯 GPU 硬件加速，0 像素擦除，极低开销) */
+.cursor-ribbon-container {
   position: fixed;
   top: 0;
   left: 0;
@@ -418,6 +418,137 @@ button {
   height: 100vh;
   pointer-events: none !important;
   z-index: 99999;
+  display: none;
+  overflow: hidden;
+  background: transparent !important;
+  border: none !important;
+}
+
+.ribbon-char-node {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: inline-block;
+  pointer-events: none !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0px;
+  white-space: nowrap;
+  user-select: none;
+  line-height: 1;
+  will-change: transform;
+  transform-origin: center center;
+  transform: translate3d(-999px, -999px, 0);
+  /* 恢复原来纯粹干净的实心字形，无描边、无阴影 */
+  filter: none !important;
+  text-shadow: none !important;
+  /* 7彩跳色调色盘 (像圣诞小彩灯一样节奏跳跃切换) */
+  animation: ribbonFairyJump 1.4s steps(1) infinite;
+}
+
+@keyframes ribbonFairyJump {
+  0%   { color: #ff0055; }
+  14%  { color: #ffcc00; }
+  28%  { color: #00ff88; }
+  42%  { color: #00e5ff; }
+  57%  { color: #ff6600; }
+  71%  { color: #cc66ff; }
+  85%  { color: #ff3399; }
+  100% { color: #ff0055; }
+}
+
+/* 窗口边缘跑马灯：黑白2秒交替切换纯文字 (无阴影、极简、降速慢移、0% CPU) */
+.window-marquee-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none !important;
+  z-index: 99998;
+  display: none;
+  overflow: hidden;
+}
+.marquee-strip {
+  position: absolute;
+  left: 0;
+  width: 100vw;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  border: none !important;
+}
+.marquee-strip.top { top: 8px; }
+.marquee-strip.bottom { bottom: 8px; }
+
+.marquee-track {
+  display: inline-block;
+  white-space: nowrap;
+  will-change: transform;
+  /* 速度放缓至 34 秒从一端滑到另一端 */
+  animation: singleMarqueeScroll 34s linear infinite;
+}
+.marquee-track.reverse {
+  animation: singleMarqueeScrollReverse 34s linear infinite;
+  animation-delay: -17s;
+}
+
+.marquee-single-text {
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-shadow: none !important; /* 彻底去除阴影，纯粹干净字形 */
+  /* 每 2 秒整句在白色与黑色之间交替切换 (周期为 4 秒：2 秒纯白，2 秒纯黑) */
+  animation: blackWhiteToggle 4s steps(1) infinite;
+}
+
+/* 黑白每 2 秒瞬时切换，适应深浅变换的文档背景 */
+@keyframes blackWhiteToggle {
+  0%, 49.9% {
+    color: #ffffff;
+  }
+  50%, 100% {
+    color: #000000;
+  }
+}
+
+/* 单独一句话慢速平滑滑过全屏 */
+@keyframes singleMarqueeScroll {
+  0% {
+    transform: translate3d(100vw, 0, 0);
+  }
+  100% {
+    transform: translate3d(-100%, 0, 0);
+  }
+}
+
+@keyframes singleMarqueeScrollReverse {
+  0% {
+    transform: translate3d(-100%, 0, 0);
+  }
+  100% {
+    transform: translate3d(100vw, 0, 0);
+  }
+}
+
+/* 全屏微透斜纹防盗水印 (纯 SVG 平铺，全屏覆盖且无法裁切) */
+.anti-record-watermark-layer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none !important;
+  z-index: 99997;
+  display: none;
+  opacity: 0.12;
+  background-repeat: repeat;
 }
 
 /* 全屏静默录屏虚线边框指示器 (全事件穿透，绝无任何文字与小红点录入) */
@@ -1750,8 +1881,17 @@ textarea.fabric-textarea,
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
-  <!-- 鼠标随动幻彩丝带文字 Canvas (全事件穿透) -->
-  <canvas id="cursorRibbonCanvas"></canvas>
+  <!-- 低功耗防录屏宣发组件：7彩跳色纯文字 (无背景无边框，圣诞小彩灯跳跃质感) -->
+  <div id="cursorRibbonContainer" class="cursor-ribbon-container"></div>
+  <div id="windowMarqueeContainer" class="window-marquee-container">
+    <div class="marquee-strip top">
+      <div class="marquee-track" id="marqueeTrackTop"></div>
+    </div>
+    <div class="marquee-strip bottom">
+      <div class="marquee-track reverse" id="marqueeTrackBottom"></div>
+    </div>
+  </div>
+  <div id="antiRecordWatermarkLayer" class="anti-record-watermark-layer"></div>
   <!-- 全屏录屏静默提示虚线框 (全事件穿透、极简静默指示) -->
   <div id="screenRecordOutline"></div>
 
@@ -1814,21 +1954,27 @@ textarea.fabric-textarea,
             <i data-lucide="chevron-down" class="btn-chevron"></i>
           </button>
           <div class="import-dropdown-menu" id="importDropdownMenu">
-            <div class="settings-menu-group-title">幻彩标语与窗口走马灯</div>
+            <div class="settings-menu-group-title">防录屏与宣发水印 (极低功耗版)</div>
             <div class="cursor-ad-setting-box" id="cursorAdSettingBox">
               <div class="cursor-ad-toggle-row">
                 <label class="switch-label">
                   <input type="checkbox" class="switch-checkbox" id="cursorAdToggleCheckbox">
-                  <span>开启随动幻彩文字</span>
+                  <span>光标防录丝带 (移动丝带·静止围成圈)</span>
                 </label>
               </div>
               <div class="cursor-ad-toggle-row" style="margin-top: 6px;">
                 <label class="switch-label">
                   <input type="checkbox" class="switch-checkbox" id="windowMarqueeToggleCheckbox">
-                  <span>开启窗口边缘走马灯</span>
+                  <span>窗口边缘跑马灯 (黑白2秒交替·慢移无阴影)</span>
                 </label>
               </div>
-              <input type="text" class="cursor-ad-input" id="cursorAdTextInput" placeholder="输入跟随文字，如：主讲人 · 欢迎咨询" value="主讲人 · 欢迎咨询">
+              <div class="cursor-ad-toggle-row" style="margin-top: 6px;">
+                <label class="switch-label">
+                  <input type="checkbox" class="switch-checkbox" id="antiWatermarkToggleCheckbox">
+                  <span>全屏防盗微透斜纹水印 (无法裁切)</span>
+                </label>
+              </div>
+              <input type="text" class="cursor-ad-input" id="cursorAdTextInput" placeholder="输入宣传标语，如：主讲人 · 欢迎咨询" value="主讲人 · 欢迎咨询">
             </div>
 
             <div class="settings-menu-divider"></div>
@@ -2985,27 +3131,66 @@ function setupEventListeners() {
     }, true);
   }
 
-  // 鼠标随动丝带文字移动轨迹监听
+      // 低功耗丝带与环绕系统鼠标监听：严格限制在浏览器窗口内，出界时驻留在边缘自转
   window.addEventListener('mousemove', (e) => {
-    // 当处于静止消隐状态时，将所有粒子节点预置在鼠标位置，实现从鼠标处宛如丝带拉出的飘逸效果
-    if (typeof ribbonSystem !== 'undefined') {
-      if (ribbonSystem.alpha <= 0.02) {
-        for (let i = 0; i < ribbonSystem.points.length; i++) {
-          ribbonSystem.points[i].x = e.clientX + 14;
-          ribbonSystem.points[i].y = e.clientY + 14;
-          ribbonSystem.points[i].angle = 0;
-        }
+    if (!state.cursorAdEnabled) return;
+
+    const N = domRibbonSystem.chars.length || 10;
+    const orbitRadius = Math.max(36, (N * 18) / (2 * Math.PI));
+    const safeMargin = orbitRadius + 18;
+    const minSafeX = safeMargin;
+    const maxSafeX = Math.max(minSafeX, window.innerWidth - safeMargin);
+    const minSafeY = safeMargin;
+    const maxSafeY = Math.max(minSafeY, window.innerHeight - safeMargin);
+
+    const clampedX = Math.max(minSafeX, Math.min(maxSafeX, e.clientX));
+    const clampedY = Math.max(minSafeY, Math.min(maxSafeY, e.clientY));
+
+    // 首次激活时对齐所有粒子位置
+    if (domRibbonSystem.mouseX < 0 || domRibbonSystem.mouseY < 0) {
+      for (let i = 0; i < domRibbonSystem.points.length; i++) {
+        domRibbonSystem.points[i].x = clampedX;
+        domRibbonSystem.points[i].y = clampedY;
       }
-      ribbonSystem.mouseX = e.clientX;
-      ribbonSystem.mouseY = e.clientY;
-      ribbonSystem.lastMoveTime = performance.now();
+    }
+
+    domRibbonSystem.mouseX = clampedX;
+    domRibbonSystem.mouseY = clampedY;
+    domRibbonSystem.lastMoveTime = performance.now();
+
+    if (!domRibbonSystem.isRunning) {
+      domRibbonSystem.isRunning = true;
+      domRibbonSystem.rafId = requestAnimationFrame(updateRibbonFrame);
     }
   });
 
+  // 当鼠标移出浏览器界面：文字绝不消失，而是平滑收拢成圆圈，驻留在界面边缘继续旋转
   document.addEventListener('mouseleave', () => {
-    if (typeof ribbonSystem !== 'undefined') {
-      ribbonSystem.mouseX = -999;
-      ribbonSystem.mouseY = -999;
+    if (!state.cursorAdEnabled) return;
+    const N = domRibbonSystem.chars.length || 10;
+    const orbitRadius = Math.max(36, (N * 18) / (2 * Math.PI));
+    const safeMargin = orbitRadius + 18;
+    const minSafeX = safeMargin;
+    const maxSafeX = Math.max(minSafeX, window.innerWidth - safeMargin);
+    const minSafeY = safeMargin;
+    const maxSafeY = Math.max(minSafeY, window.innerHeight - safeMargin);
+
+    if (domRibbonSystem.mouseX > 0 && domRibbonSystem.mouseY > 0) {
+      domRibbonSystem.mouseX = Math.max(minSafeX, Math.min(maxSafeX, domRibbonSystem.mouseX));
+      domRibbonSystem.mouseY = Math.max(minSafeY, Math.min(maxSafeY, domRibbonSystem.mouseY));
+    }
+    // 强制触发静止状态判定，文字在边缘平滑聚集成圆环继续自转
+    domRibbonSystem.lastMoveTime = 0;
+  });
+
+  // 窗口大小调整时自动修正边缘坐标
+  window.addEventListener('resize', () => {
+    if (domRibbonSystem.mouseX > 0 && domRibbonSystem.mouseY > 0) {
+      const N = domRibbonSystem.chars.length || 10;
+      const orbitRadius = Math.max(36, (N * 18) / (2 * Math.PI));
+      const safeMargin = orbitRadius + 18;
+      domRibbonSystem.mouseX = Math.max(safeMargin, Math.min(window.innerWidth - safeMargin, domRibbonSystem.mouseX));
+      domRibbonSystem.mouseY = Math.max(safeMargin, Math.min(window.innerHeight - safeMargin, domRibbonSystem.mouseY));
     }
   });
   if (elements.importFolderOpt) {
@@ -3924,12 +4109,10 @@ function setTool(toolName) {
     btn.classList.toggle('active', btn.getAttribute('data-tool') === toolName);
   });
 
-  // 当使用工具栏的功能（橡皮擦、输入文字、画笔、荧光笔等）时不显示丝带文字
-  if (toolName !== 'select' && typeof ribbonSystem !== 'undefined') {
-    ribbonSystem.alpha = 0;
-    if (ribbonSystem.ctx && ribbonSystem.canvas) {
-      ribbonSystem.ctx.clearRect(0, 0, ribbonSystem.canvas.width, ribbonSystem.canvas.height);
-    }
+  // 当使用工具栏的功能（橡皮擦、输入文字、画笔、荧光笔等）时隐藏光标防录标语
+  if (toolName !== 'select') {
+    const badge = document.getElementById('cursorAdBadge');
+    if (badge) badge.style.display = 'none';
   }
 
   if (!fabricCanvas) return;
@@ -5819,37 +6002,32 @@ function updateDrawerActiveState() {
 }
 
 // ==========================================
-// 鼠标随动幻彩丝带文字系统 (Canvas 蛇形拖曳轨迹 + 静止环形自转)
+// 低功耗防录屏与宣发水印系统 (纯 GPU 硬件加速 + 0 像素重绘)
+// 1. 光标丝带与环绕系统：每个汉字是独立的 GPU Compositor 图层，移动如丝带拖曳，静止聚集成自转光环
+// 2. 窗口边缘跑马灯：纯 CSS keyframes 动画，单句黑白交替
+// 3. 全屏微透斜纹水印：SVG 重复平铺背景，全屏覆盖且无法裁切
 // ==========================================
-const ribbonSystem = {
-  canvas: null,
-  ctx: null,
+const domRibbonSystem = {
+  container: null,
   chars: [],
-  charWidths: [],
-  totalWidth: 0,
+  spans: [],
   points: [],
   mouseX: -999,
   mouseY: -999,
   lastMoveTime: 0,
-  alpha: 0,
-  isInitialized: false,
-  animationFrameId: null,
-
-  // 围绕光标旋转状态
   orbitAngle: 0,
-  orbitFactor: 0, // 0 = 纯丝带拖曳状态, 1 = 纯围绕鼠标旋转的圆环状态
+  orbitFactor: 0, // 0 = 纯丝带拖曳, 1 = 纯围绕鼠标转圈
+  rafId: null,
+  isRunning: false
 };
 
-function isCursorAdAllowed() {
+function isRibbonAllowed() {
   if (!state.cursorAdEnabled) return false;
-  // 当使用橡皮擦、文字、画笔、荧光笔等工具时，不显示动画
   if (state.currentTool && state.currentTool !== 'select') return false;
-  // 如果画布上有文字正在输入编辑中，不显示
   if (window.fabricCanvas && fabricCanvas.getActiveObject && fabricCanvas.getActiveObject()) {
     const activeObj = fabricCanvas.getActiveObject();
     if (activeObj && activeObj.isEditing) return false;
   }
-  // 如果焦点在输入框/文本域中，不显示
   const activeEl = document.activeElement;
   if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable)) {
     return false;
@@ -5857,376 +6035,195 @@ function isCursorAdAllowed() {
   return true;
 }
 
-function initCursorRibbonCanvas() {
-  ribbonSystem.canvas = document.getElementById('cursorRibbonCanvas');
-  if (!ribbonSystem.canvas) return;
-  ribbonSystem.ctx = ribbonSystem.canvas.getContext('2d');
+function initDOMRibbon(text) {
+  const container = document.getElementById('cursorRibbonContainer');
+  if (!container) return;
+  domRibbonSystem.container = container;
 
-  function resizeCanvas() {
-    if (!ribbonSystem.canvas) return;
-    ribbonSystem.canvas.width = window.innerWidth;
-    ribbonSystem.canvas.height = window.innerHeight;
-  }
-  resizeCanvas();
-  window.addEventListener('resize', resizeCanvas);
-
-  updateRibbonText(state.cursorAdText || '主讲人：人在葡萄牙 · YouTube');
-
-  if (!ribbonSystem.isInitialized) {
-    ribbonSystem.isInitialized = true;
-    requestAnimationFrame(renderCursorRibbon);
-  }
-}
-
-function updateRibbonText(text) {
   const str = (text && text.trim()) ? text.trim() : '主讲人 · 欢迎咨询';
-  ribbonSystem.chars = Array.from(str);
-  ribbonSystem.charWidths = [];
-  ribbonSystem.totalWidth = 0;
+  domRibbonSystem.chars = Array.from(str);
+  container.innerHTML = '';
+  domRibbonSystem.spans = [];
+  domRibbonSystem.points = [];
 
-  const testCanvas = ribbonSystem.canvas || document.createElement('canvas');
-  const tCtx = testCanvas.getContext('2d');
-  tCtx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", sans-serif';
-
-  for (let i = 0; i < ribbonSystem.chars.length; i++) {
-    const w = Math.max(9, tCtx.measureText(ribbonSystem.chars[i]).width);
-    ribbonSystem.charWidths.push(w);
-    ribbonSystem.totalWidth += w;
-  }
-
-  const N = ribbonSystem.chars.length;
-  while (ribbonSystem.points.length < N) {
-    ribbonSystem.points.push({
-      x: ribbonSystem.mouseX > 0 ? ribbonSystem.mouseX : window.innerWidth / 2,
-      y: ribbonSystem.mouseY > 0 ? ribbonSystem.mouseY : window.innerHeight / 2,
+  const N = domRibbonSystem.chars.length;
+  for (let i = 0; i < N; i++) {
+    const span = document.createElement('span');
+    span.className = 'ribbon-char-node';
+    span.textContent = domRibbonSystem.chars[i];
+    // 每个字错开 0.15s 黑白跳色时序，更加生动有趣
+    span.style.animationDelay = `-${(i * 0.15).toFixed(2)}s`;
+    container.appendChild(span);
+    domRibbonSystem.spans.push(span);
+    domRibbonSystem.points.push({
+      x: domRibbonSystem.mouseX > 0 ? domRibbonSystem.mouseX : window.innerWidth / 2,
+      y: domRibbonSystem.mouseY > 0 ? domRibbonSystem.mouseY : window.innerHeight / 2,
       angle: 0
     });
   }
-  if (ribbonSystem.points.length > N) {
-    ribbonSystem.points.length = N;
-  }
 }
 
-function renderCursorRibbon(timestamp) {
-  const { canvas, ctx, chars, charWidths, totalWidth, points } = ribbonSystem;
-
-  if (!canvas || !ctx) {
-    requestAnimationFrame(renderCursorRibbon);
+function updateRibbonFrame(timestamp) {
+  if (!state.cursorAdEnabled) {
+    domRibbonSystem.isRunning = false;
     return;
   }
 
+  const { spans, points, chars } = domRibbonSystem;
   const N = chars.length;
-  const isAllowed = isCursorAdAllowed();
-  const timeSinceLastMove = timestamp - ribbonSystem.lastMoveTime;
-  // 鼠标移动中判定 (130ms 内有连续动作)
-  const isMouseMoving = timeSinceLastMove < 130 && ribbonSystem.mouseX > 0 && ribbonSystem.mouseY > 0;
-  const hasMousePosition = ribbonSystem.mouseX > 0 && ribbonSystem.mouseY > 0;
+  const container = domRibbonSystem.container;
 
-  // 只要处于允许状态且鼠标在视口内，透明度淡入
-  if (isAllowed && hasMousePosition) {
-    ribbonSystem.alpha = Math.min(1, ribbonSystem.alpha + 0.12);
+  if (!container || N === 0 || spans.length !== N || points.length !== N) {
+    domRibbonSystem.rafId = requestAnimationFrame(updateRibbonFrame);
+    return;
+  }
+
+  const allowed = isRibbonAllowed();
+  const hasValidPos = domRibbonSystem.mouseX > 0 && domRibbonSystem.mouseY > 0;
+
+  if (!allowed || !hasValidPos) {
+    container.style.display = 'none';
+    domRibbonSystem.rafId = requestAnimationFrame(updateRibbonFrame);
+    return;
+  }
+
+  container.style.display = 'block';
+
+  const timeSinceLastMove = timestamp - domRibbonSystem.lastMoveTime;
+  // 鼠标移动判断 (140ms 内有连续动作判定为移动中)
+  const isMoving = timeSinceLastMove < 140;
+
+  // 状态平滑过渡：移动时拉伸成丝带(orbitFactor -> 0)，静止或鼠标移出界面时平滑聚拢成自转圆环(orbitFactor -> 1)
+  if (isMoving) {
+    domRibbonSystem.orbitFactor = Math.max(0, domRibbonSystem.orbitFactor - 0.08);
   } else {
-    ribbonSystem.alpha = Math.max(0, ribbonSystem.alpha - 0.08);
+    domRibbonSystem.orbitFactor = Math.min(1, domRibbonSystem.orbitFactor + 0.045);
   }
 
-  // 状态平滑过渡：移动时恢复丝带形态(orbitFactor -> 0)，停止运动时平滑聚拢成围绕鼠标转圈的圆环(orbitFactor -> 1)
-  if (isMouseMoving) {
-    ribbonSystem.orbitFactor = Math.max(0, ribbonSystem.orbitFactor - 0.08);
-  } else if (hasMousePosition) {
-    ribbonSystem.orbitFactor = Math.min(1, ribbonSystem.orbitFactor + 0.045);
-  }
+  // 持续推进圆环自转角度 (顺时针旋转)
+  domRibbonSystem.orbitAngle = (domRibbonSystem.orbitAngle + 0.018) % (Math.PI * 2);
 
-  // 持续推进圆环自转角度 (顺时针缓慢悠扬旋转)
-  ribbonSystem.orbitAngle = (ribbonSystem.orbitAngle + 0.018) % (Math.PI * 2);
+  // 限制中心点在窗口视口安全边距之内
+  const orbitRadius = Math.max(36, (N * 18) / (2 * Math.PI));
+  const safeMargin = orbitRadius + 18;
+  const minSafeX = safeMargin;
+  const maxSafeX = Math.max(minSafeX, window.innerWidth - safeMargin);
+  const minSafeY = safeMargin;
+  const maxSafeY = Math.max(minSafeY, window.innerHeight - safeMargin);
 
-  // 清空画布 (全穿透无残留)
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const centerX = Math.max(minSafeX, Math.min(maxSafeX, domRibbonSystem.mouseX));
+  const centerY = Math.max(minSafeY, Math.min(maxSafeY, domRibbonSystem.mouseY));
 
-  if (ribbonSystem.alpha > 0.01 && N > 0 && points.length === N) {
-    // 1. 丝带物理动力学平滑计算
-    const headTargetX = ribbonSystem.mouseX + 14;
-    const headTargetY = ribbonSystem.mouseY + 14;
+  // 1. 丝带物理动力学平滑计算
+  const headTargetX = centerX;
+  const headTargetY = centerY;
 
-    points[0].x += (headTargetX - points[0].x) * 0.45;
-    points[0].y += (headTargetY - points[0].y) * 0.45;
+  points[0].x += (headTargetX - points[0].x) * 0.45;
+  points[0].y += (headTargetY - points[0].y) * 0.45;
 
-    for (let i = 1; i < N; i++) {
-      const prev = points[i - 1];
-      const curr = points[i];
+  const charSpacing = 16;
+  for (let i = 1; i < N; i++) {
+    const prev = points[i - 1];
+    const curr = points[i];
 
-      curr.x += (prev.x - curr.x) * 0.38;
-      curr.y += (prev.y - curr.y) * 0.38;
+    curr.x += (prev.x - curr.x) * 0.38;
+    curr.y += (prev.y - curr.y) * 0.38;
 
-      const dx = curr.x - prev.x;
-      const dy = curr.y - prev.y;
-      const dist = Math.hypot(dx, dy) || 0.001;
-      const spacing = (charWidths[i - 1] + charWidths[i]) * 0.5 + 2.5;
+    const dx = curr.x - prev.x;
+    const dy = curr.y - prev.y;
+    const dist = Math.hypot(dx, dy) || 0.001;
 
-      if (dist > spacing * 1.8) {
-        curr.x = prev.x + (dx / dist) * spacing * 1.8;
-        curr.y = prev.y + (dy / dist) * spacing * 1.8;
-      }
-
-      curr.angle = Math.atan2(dy, dx);
+    if (dist > charSpacing * 1.8) {
+      curr.x = prev.x + (dx / dist) * charSpacing * 1.8;
+      curr.y = prev.y + (dy / dist) * charSpacing * 1.8;
     }
 
-    // 2. 计算圆圈大小 (周长依据文字总长度与文字数量动态确定，文字多圆圈大)
-    const targetCircumference = (totalWidth || N * 13) + N * 2.8;
-    // 最小半径 32px (确保圆心留有足够空间容纳鼠标箭头光标)
-    const orbitRadius = Math.max(32, targetCircumference / (2 * Math.PI));
-
-    const factor = ribbonSystem.orbitFactor; // 0 = 纯丝带, 1 = 纯圆环
-
-    // 绘制纯净幻彩文字（完全去掉阴影，不需要发光光晕）
-    ctx.save();
-    ctx.globalAlpha = ribbonSystem.alpha;
-    ctx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.shadowBlur = 0;
-    ctx.shadowColor = 'transparent';
-
-    const baseHue = (timestamp * 0.09) % 360;
-
-    // 从后往前绘制字符
-    for (let i = N - 1; i >= 0; i--) {
-      const pt = points[i];
-
-      // 圆环模式下的圆周理论坐标与切线角度
-      const charAngle = ribbonSystem.orbitAngle + i * (2 * Math.PI / N);
-      const circleX = ribbonSystem.mouseX + orbitRadius * Math.cos(charAngle);
-      const circleY = ribbonSystem.mouseY + orbitRadius * Math.sin(charAngle);
-      const circleTangent = charAngle + Math.PI / 2;
-
-      // 丝带模式下的微波浪倾斜角度
-      const ribbonTilt = Math.max(-0.48, Math.min(0.48, Math.sin(pt.angle) * 0.45));
-
-      // 根据 factor 平滑混合当前字符的实际绘制位置与旋转角度
-      const drawX = pt.x * (1 - factor) + circleX * factor;
-      const drawY = pt.y * (1 - factor) + circleY * factor;
-      const drawAngle = ribbonTilt * (1 - factor) + circleTangent * factor;
-
-      const charHue = (baseHue + i * (360 / Math.max(1, N))) % 360;
-      ctx.fillStyle = `hsl(${charHue}, 100%, 62%)`;
-
-      ctx.save();
-      ctx.translate(drawX, drawY);
-      ctx.rotate(drawAngle);
-      ctx.fillText(chars[i], 0, 0);
-      ctx.restore();
-    }
-
-    ctx.restore();
+    curr.angle = Math.atan2(dy, dx);
   }
 
-  // 绘制窗口边缘环绕幻彩走马灯 (若已开启)
-  renderWindowMarquee(ctx, canvas, timestamp);
+  const factor = domRibbonSystem.orbitFactor; // 0 = 纯丝带, 1 = 纯圆环
 
-  requestAnimationFrame(renderCursorRibbon);
+  // 2. 纯 GPU translate3d + rotate 硬件加速合成，且严格限制在浏览器窗口可视范围内
+  const charBoundaryPadding = 10;
+  const maxCharX = window.innerWidth - charBoundaryPadding;
+  const maxCharY = window.innerHeight - charBoundaryPadding;
+
+  for (let i = 0; i < N; i++) {
+    const pt = points[i];
+
+    // 圆环模式下的圆周理论坐标与切线角度
+    const charAngle = domRibbonSystem.orbitAngle + i * (2 * Math.PI / N);
+    const circleX = centerX + orbitRadius * Math.cos(charAngle);
+    const circleY = centerY + orbitRadius * Math.sin(charAngle);
+    const circleTangent = charAngle + Math.PI / 2;
+
+    // 丝带模式下的微波浪倾斜角度
+    const ribbonTilt = Math.max(-0.48, Math.min(0.48, Math.sin(pt.angle) * 0.45));
+
+    // 根据 factor 平滑混合位置与旋转角度
+    const rawX = pt.x * (1 - factor) + circleX * factor;
+    const rawY = pt.y * (1 - factor) + circleY * factor;
+    const drawAngle = ribbonTilt * (1 - factor) + circleTangent * factor;
+
+    // 视口边界钳制：确保文字的任何一个字符都不会被裁剪或移出浏览器边缘之外
+    const finalX = Math.max(charBoundaryPadding, Math.min(maxCharX, rawX));
+    const finalY = Math.max(charBoundaryPadding, Math.min(maxCharY, rawY));
+
+    spans[i].style.transform = `translate3d(${finalX.toFixed(1)}px, ${finalY.toFixed(1)}px, 0) rotate(${drawAngle.toFixed(3)}rad)`;
+  }
+
+  domRibbonSystem.rafId = requestAnimationFrame(updateRibbonFrame);
 }
 
-// ==========================================
-// ==========================================
-// 窗口边缘走马灯管理 (四屏衔接规则体系)
-// 四条边如四个独立显示屏，衔接时接力启动，各边具备专属显示规则：
-// 1. 顶边屏幕：正常阅读顺序(正立)，从右向左平移 (A在前，G在后)
-// 2. 左边屏幕：顶端文字直接逆时针旋转90度继续走，向下平移 (A在前在下，G在后在上)
-// 3. 底边屏幕：正常阅读顺序不变(正立)，从左向右平移 (段落结尾G最先出现，最后出现A)
-// 4. 右边屏幕：底边文字直接逆时针旋转90度继续走，向上平移 (G在前在上，A在后在下)
-//    走到右上角后，顶边屏幕重新启动，呈现正常语句顺序
-// ==========================================
-const marqueeSystem = {
-  offset: 0,
-  chars: [],
-  charOffsets: [],
-  totalLength: 0,
-};
+function updateMarqueeDOM() {
+  const text = (state.cursorAdText && state.cursorAdText.trim()) ? state.cursorAdText.trim() : '主讲人 · 欢迎咨询';
+  const trackTop = document.getElementById('marqueeTrackTop');
+  const trackBottom = document.getElementById('marqueeTrackBottom');
+  if (!trackTop || !trackBottom) return;
 
-function updateMarqueeCache() {
-  const baseText = (state.cursorAdText && state.cursorAdText.trim()) 
-    ? state.cursorAdText.trim() 
-    : '主讲人 · 欢迎咨询';
-  marqueeSystem.chars = Array.from(baseText);
-  marqueeSystem.charOffsets = [];
-
-  const testCanvas = ribbonSystem.canvas || document.createElement('canvas');
-  const tCtx = testCanvas.getContext('2d');
-  tCtx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", sans-serif';
-
-  let currentDist = 0;
-  for (let i = 0; i < marqueeSystem.chars.length; i++) {
-    const w = Math.max(12, tCtx.measureText(marqueeSystem.chars[i]).width);
-    const centerOffset = currentDist + w * 0.5;
-    marqueeSystem.charOffsets.push(centerOffset);
-    currentDist += w + 3; // 字符之间预留 3px 优雅间距
-  }
-  marqueeSystem.totalLength = Math.max(currentDist - 3, 10);
+  const singleHtml = `<span class="marquee-single-text">${text}</span>`;
+  trackTop.innerHTML = singleHtml;
+  trackBottom.innerHTML = singleHtml;
 }
 
-function renderWindowMarquee(ctx, canvas, timestamp) {
-  if (!state.windowMarqueeEnabled) return;
+function updateAntiWatermarkLayer() {
+  const layer = document.getElementById('antiRecordWatermarkLayer');
+  if (!layer) return;
 
-  const W = canvas.width;
-  const H = canvas.height;
-  const m = 14; // 贴紧窗口边缘内侧 14px
-  if (W <= 120 || H <= 120) return;
-
-  if (!marqueeSystem.chars || marqueeSystem.chars.length === 0) {
-    updateMarqueeCache();
-  }
-  const { chars, charOffsets, totalLength } = marqueeSystem;
-  const N = chars.length;
-  if (N === 0) return;
-
-  const X_min = m;
-  const X_max = W - m;
-  const Y_min = m;
-  const Y_max = H - m;
-
-  const Wspan = Math.max(10, X_max - X_min);
-  const Hspan = Math.max(10, Y_max - Y_min);
-  const L = totalLength;
-
-  // ─────────────────────────────────────────────────────────────────
-  // 首字触发链式衔接规则
-  // 各边完整行程（首字入场到尾字离场）
-  const D_top    = Wspan + L;
-  const D_left   = Hspan + L;
-  const D_bottom = Wspan + L;
-  const D_right  = Hspan + L;
-
-  // 首字偏移量（chars[0] 中心距起始端的距离）
-  const ch0 = charOffsets.length > 0 ? charOffsets[0] : 0;
-
-  // 各边首字从入口走到出口的行程（即触发下一屏的时刻）
-  const triggerW = Wspan + ch0; // 顶/底边
-  const triggerH = Hspan + ch0; // 左/右边
-
-  // 各屏幕的相对启动时间节点
-  const t_top    = 0;
-  const t_left   = t_top    + triggerW; // 顶边首字触左角 → 左边启动
-  const t_bottom = t_left   + triggerH; // 左边首字触底角 → 底边启动
-  const t_right  = t_bottom + triggerW; // 底边首字触右角 → 右边启动
-  const totalPeriod = t_right + D_right;
-
-  marqueeSystem.offset = (marqueeSystem.offset + 0.55) % totalPeriod;
-  const cur = marqueeSystem.offset;
-
-  // 幻彩流光色彩基准
-  const baseHue = (timestamp * 0.05) % 360;
-
-  ctx.save();
-  ctx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.shadowBlur = 0;
-  ctx.shadowColor = 'transparent';
-
-  // ── 屏幕1：顶边 右→左 正立 ──────────────────────────────────────
-  {
-    const s = cur;
-    if (s >= 0 && s < D_top) {
-      const xStart = X_max - s;
-      ctx.save();
-      ctx.beginPath(); ctx.rect(X_min, Y_min - 16, Wspan, 32); ctx.clip();
-      for (let i = 0; i < N; i++) {
-        const charHue = (baseHue + (i / N) * 120) % 360;
-        ctx.fillStyle = `hsl(${charHue}, 100%, 65%)`;
-        ctx.fillText(chars[i], xStart + charOffsets[i], Y_min);
-      }
-      ctx.restore();
-    }
+  if (!state.antiWatermarkEnabled) {
+    layer.style.display = 'none';
+    return;
   }
 
-  // ── 屏幕2：左边 上→下 逆时针90° ──────────────────────────────────
-  {
-    const s = cur - t_left;
-    if (s >= 0 && s < D_left) {
-      const yFront = Y_min + s;
-      ctx.save();
-      ctx.beginPath(); ctx.rect(X_min - 16, Y_min, 32, Hspan); ctx.clip();
-      for (let i = 0; i < N; i++) {
-        const charHue = (baseHue + (i / N) * 120) % 360;
-        ctx.fillStyle = `hsl(${charHue}, 100%, 65%)`;
-        ctx.save();
-        ctx.translate(X_min, yFront - charOffsets[i]);
-        ctx.rotate(-Math.PI / 2);
-        ctx.fillText(chars[i], 0, 0);
-        ctx.restore();
-      }
-      ctx.restore();
-    }
-  }
+  const text = (state.cursorAdText && state.cursorAdText.trim()) ? state.cursorAdText.trim() : '主讲人 · 欢迎咨询';
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="180">
+    <text x="30" y="100" fill="%23ffffff" fill-opacity="0.14" font-size="14" font-weight="bold" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, PingFang SC, sans-serif" transform="rotate(-22 30 100)">${text}</text>
+  </svg>`;
 
-  // ── 屏幕3：底边 左→右 正立 ──────────────────────────────────────
-  {
-    const s = cur - t_bottom;
-    if (s >= 0 && s < D_bottom) {
-      const xStart = (X_min - L) + s;
-      ctx.save();
-      ctx.beginPath(); ctx.rect(X_min, Y_max - 16, Wspan, 32); ctx.clip();
-      for (let i = 0; i < N; i++) {
-        const charHue = (baseHue + (i / N) * 120) % 360;
-        ctx.fillStyle = `hsl(${charHue}, 100%, 65%)`;
-        ctx.fillText(chars[i], xStart + charOffsets[i], Y_max);
-      }
-      ctx.restore();
-    }
-  }
-
-  // ── 屏幕4：右边 下→上 逆时针90° ──────────────────────────────────
-  {
-    const s = cur - t_right;
-    if (s >= 0 && s < D_right) {
-      const yBack = Y_max - s + L;
-      ctx.save();
-      ctx.beginPath(); ctx.rect(X_max - 16, Y_min, 32, Hspan); ctx.clip();
-      for (let i = 0; i < N; i++) {
-        const charHue = (baseHue + (i / N) * 120) % 360;
-        ctx.fillStyle = `hsl(${charHue}, 100%, 65%)`;
-        ctx.save();
-        ctx.translate(X_max, yBack - charOffsets[i]);
-        ctx.rotate(-Math.PI / 2);
-        ctx.fillText(chars[i], 0, 0);
-        ctx.restore();
-      }
-      ctx.restore();
-    }
-  }
-
-  ctx.restore();
+  const encodedSvg = 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+  layer.style.backgroundImage = `url("${encodedSvg}")`;
+  layer.style.display = 'block';
 }
 
 function initCursorAd() {
-  if (!elements.cursorRibbonCanvas) {
-    elements.cursorRibbonCanvas = document.getElementById('cursorRibbonCanvas');
-  }
-  if (!elements.cursorAdToggleCheckbox) {
-    elements.cursorAdToggleCheckbox = document.getElementById('cursorAdToggleCheckbox');
-  }
-  if (!elements.windowMarqueeToggleCheckbox) {
-    elements.windowMarqueeToggleCheckbox = document.getElementById('windowMarqueeToggleCheckbox');
-  }
-  if (!elements.cursorAdTextInput) {
-    elements.cursorAdTextInput = document.getElementById('cursorAdTextInput');
-  }
-  if (!elements.cursorAdSettingBox) {
-    elements.cursorAdSettingBox = document.getElementById('cursorAdSettingBox');
-  }
+  elements.cursorRibbonContainer = document.getElementById('cursorRibbonContainer');
+  elements.windowMarqueeContainer = document.getElementById('windowMarqueeContainer');
+  elements.antiRecordWatermarkLayer = document.getElementById('antiRecordWatermarkLayer');
+  elements.cursorAdToggleCheckbox = document.getElementById('cursorAdToggleCheckbox');
+  elements.windowMarqueeToggleCheckbox = document.getElementById('windowMarqueeToggleCheckbox');
+  elements.antiWatermarkToggleCheckbox = document.getElementById('antiWatermarkToggleCheckbox');
+  elements.cursorAdTextInput = document.getElementById('cursorAdTextInput');
 
   try {
     const savedEnabled = localStorage.getItem('meet_cursor_ad_enabled');
     const savedMarquee = localStorage.getItem('meet_window_marquee_enabled');
+    const savedWatermark = localStorage.getItem('meet_anti_watermark_enabled');
     const savedText = localStorage.getItem('meet_cursor_ad_text');
-    if (savedEnabled !== null) {
-      state.cursorAdEnabled = (savedEnabled === '1');
-    }
-    if (savedMarquee !== null) {
-      state.windowMarqueeEnabled = (savedMarquee === '1');
-    }
-    if (savedText !== null && savedText.trim() !== '') {
-      state.cursorAdText = savedText;
-    }
+
+    if (savedEnabled !== null) state.cursorAdEnabled = (savedEnabled === '1');
+    if (savedMarquee !== null) state.windowMarqueeEnabled = (savedMarquee === '1');
+    if (savedWatermark !== null) state.antiWatermarkEnabled = (savedWatermark === '1');
+    if (savedText !== null && savedText.trim() !== '') state.cursorAdText = savedText;
   } catch (_) {}
 
   if (elements.cursorAdToggleCheckbox) {
@@ -6235,12 +6232,28 @@ function initCursorAd() {
   if (elements.windowMarqueeToggleCheckbox) {
     elements.windowMarqueeToggleCheckbox.checked = state.windowMarqueeEnabled;
   }
+  if (elements.antiWatermarkToggleCheckbox) {
+    elements.antiWatermarkToggleCheckbox.checked = !!state.antiWatermarkEnabled;
+    elements.antiWatermarkToggleCheckbox.addEventListener('change', (e) => {
+      setAntiWatermarkEnabled(e.target.checked);
+    });
+  }
   if (elements.cursorAdTextInput) {
     elements.cursorAdTextInput.value = state.cursorAdText;
   }
 
-  initCursorRibbonCanvas();
-  updateMarqueeCache();
+  // 渲染初始 DOM 丝带文字
+  initDOMRibbon(state.cursorAdText);
+  if (state.cursorAdEnabled && !domRibbonSystem.isRunning) {
+    domRibbonSystem.isRunning = true;
+    domRibbonSystem.rafId = requestAnimationFrame(updateRibbonFrame);
+  }
+
+  updateMarqueeDOM();
+  if (elements.windowMarqueeContainer) {
+    elements.windowMarqueeContainer.style.display = state.windowMarqueeEnabled ? 'block' : 'none';
+  }
+  updateAntiWatermarkLayer();
 }
 
 function setCursorAdEnabled(enabled) {
@@ -6248,16 +6261,18 @@ function setCursorAdEnabled(enabled) {
   if (elements.cursorAdToggleCheckbox) {
     elements.cursorAdToggleCheckbox.checked = enabled;
   }
-  if (!enabled && !state.windowMarqueeEnabled) {
-    ribbonSystem.alpha = 0;
-    if (ribbonSystem.ctx && ribbonSystem.canvas) {
-      ribbonSystem.ctx.clearRect(0, 0, ribbonSystem.canvas.width, ribbonSystem.canvas.height);
-    }
+  const container = document.getElementById('cursorRibbonContainer');
+  if (container) {
+    container.style.display = enabled ? 'block' : 'none';
+  }
+  if (enabled && !domRibbonSystem.isRunning) {
+    domRibbonSystem.isRunning = true;
+    domRibbonSystem.rafId = requestAnimationFrame(updateRibbonFrame);
   }
   try {
     localStorage.setItem('meet_cursor_ad_enabled', enabled ? '1' : '0');
   } catch (_) {}
-  showShortcutToast(enabled ? '已开启鼠标随动丝带幻彩文字' : '已关闭鼠标随动丝带文字');
+  showShortcutToast(enabled ? '已开启光标防录丝带 (移动丝带·静止围成圈)' : '已关闭光标防录丝带');
 }
 
 function setWindowMarqueeEnabled(enabled) {
@@ -6265,21 +6280,33 @@ function setWindowMarqueeEnabled(enabled) {
   if (elements.windowMarqueeToggleCheckbox) {
     elements.windowMarqueeToggleCheckbox.checked = enabled;
   }
-  if (!enabled && !state.cursorAdEnabled) {
-    if (ribbonSystem.ctx && ribbonSystem.canvas) {
-      ribbonSystem.ctx.clearRect(0, 0, ribbonSystem.canvas.width, ribbonSystem.canvas.height);
-    }
+  const marquee = document.getElementById('windowMarqueeContainer');
+  if (marquee) {
+    marquee.style.display = enabled ? 'block' : 'none';
   }
   try {
     localStorage.setItem('meet_window_marquee_enabled', enabled ? '1' : '0');
   } catch (_) {}
-  showShortcutToast(enabled ? '已开启窗口边缘走马灯' : '已关闭窗口边缘走马灯');
+  showShortcutToast(enabled ? '已开启窗口边缘跑马灯' : '已关闭窗口边缘跑马灯');
+}
+
+function setAntiWatermarkEnabled(enabled) {
+  state.antiWatermarkEnabled = enabled;
+  if (elements.antiWatermarkToggleCheckbox) {
+    elements.antiWatermarkToggleCheckbox.checked = enabled;
+  }
+  updateAntiWatermarkLayer();
+  try {
+    localStorage.setItem('meet_anti_watermark_enabled', enabled ? '1' : '0');
+  } catch (_) {}
+  showShortcutToast(enabled ? '已开启全屏防盗微透斜纹水印' : '已关闭全屏防盗水印');
 }
 
 function setCursorAdText(text) {
   state.cursorAdText = text;
-  updateRibbonText(text);
-  updateMarqueeCache();
+  initDOMRibbon(text);
+  updateMarqueeDOM();
+  updateAntiWatermarkLayer();
   try {
     localStorage.setItem('meet_cursor_ad_text', text);
   } catch (_) {}
