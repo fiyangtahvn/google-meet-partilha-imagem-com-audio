@@ -1082,86 +1082,121 @@ textarea.fabric-textarea,
   user-select: text !important;
 }
 
-/* 浮动音频播放器 (展开/折叠双形态，屏幕固定悬浮) */
+/* 浮动音频播放器容器 (以常驻圆形为基准点，支持按住小圆圈拖动，四周自适应展开完整面板) */
 .floating-audio-player {
   position: fixed;
   bottom: 24px;
   left: 24px;
-  width: 320px;
-  background: rgba(22, 27, 34, 0.94);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-xl);
-  z-index: 500;
-  user-select: none;
-  cursor: default;
-  transition: width 0.28s cubic-bezier(0.16, 1, 0.3, 1),
-              height 0.28s cubic-bezier(0.16, 1, 0.3, 1),
-              border-radius 0.28s cubic-bezier(0.16, 1, 0.3, 1),
-              padding 0.28s cubic-bezier(0.16, 1, 0.3, 1),
-              border-color 0.2s,
-              box-shadow 0.2s;
-  overflow: hidden;
-}
-
-.floating-audio-player:hover {
-  border-color: rgba(96, 165, 250, 0.5);
-}
-
-/* 展开状态 (标准形态) */
-.floating-audio-player:not(.collapsed) {
-  width: 320px;
-  border-radius: var(--radius-lg);
-  padding: 12px 16px;
-}
-
-.floating-audio-player:not(.collapsed) .player-collapsed-view {
-  display: none;
-}
-
-.floating-audio-player:not(.collapsed) .player-expanded-view {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  opacity: 1;
-  animation: fadeInPlayer 0.2s ease-out;
-}
-
-@keyframes fadeInPlayer {
-  from { opacity: 0; transform: scale(0.96); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-/* 折叠状态 (圆形紧凑微型图标形态) */
-.floating-audio-player.collapsed {
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  padding: 0;
+  z-index: 500;
+  user-select: none;
+  cursor: grab;
+  overflow: visible;
+  transition: transform 0.15s ease-out;
+}
+
+.floating-audio-player.dragging {
+  cursor: grabbing;
+}
+
+/* 常驻小圆圈播放器 (基准点 / 主拖拽把手) */
+.player-collapsed-view {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: grab;
-  border-color: rgba(96, 165, 250, 0.45);
+  border: 1.5px solid rgba(96, 165, 250, 0.45);
   background: rgba(18, 23, 30, 0.95);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 16px rgba(37, 99, 235, 0.25);
+  backdrop-filter: blur(16px);
+  position: relative;
+  z-index: 2;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.2s,
+              box-shadow 0.2s,
+              background-color 0.2s;
 }
 
-.floating-audio-player.collapsed:active {
+.player-collapsed-view:hover {
+  transform: scale(1.08);
+  border-color: #60a5fa;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.7), 0 0 22px rgba(59, 130, 246, 0.55);
+  background: rgba(22, 29, 39, 0.98);
+}
+
+.player-collapsed-view:active,
+.floating-audio-player.dragging .player-collapsed-view {
   cursor: grabbing;
+  transform: scale(0.96);
+  border-color: #3b82f6;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.8), 0 0 25px rgba(37, 99, 235, 0.7);
 }
 
-.floating-audio-player.collapsed .player-expanded-view {
-  display: none;
+/* 当完整面板展开时，小圆圈保持常亮激活发光效果 */
+.floating-audio-player:not(.collapsed) .player-collapsed-view,
+.floating-audio-player.expanded .player-collapsed-view {
+  border-color: #60a5fa;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.65), 0 0 18px rgba(59, 130, 246, 0.45);
 }
 
-.floating-audio-player.collapsed .player-collapsed-view {
+/* 完整弹出的播放器控制面板 (以圆圈为基准点，在周围有空间的位置弹出) */
+.player-expanded-view {
+  position: absolute;
+  width: 320px;
+  background: rgba(22, 27, 34, 0.96);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.7), 0 0 24px rgba(37, 99, 235, 0.25);
+  padding: 12px 16px;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 1;
+  user-select: none;
+  cursor: default;
+
+  /* 默认折叠收起不可见状态 */
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  transform: scale(0.92);
+  transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              visibility 0.22s,
+              border-color 0.2s,
+              box-shadow 0.2s;
+}
+
+/* 完整面板展开时 */
+.floating-audio-player:not(.collapsed) .player-expanded-view,
+.floating-audio-player.expanded .player-expanded-view {
+  opacity: 1;
+  pointer-events: auto;
+  visibility: visible;
+  transform: scale(1);
+}
+
+.player-expanded-view:hover {
+  border-color: rgba(96, 165, 250, 0.5);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.75), 0 0 28px rgba(59, 130, 246, 0.3);
+}
+
+/* 安全桥接伪元素：覆盖圆圈与面板之间的呼吸间隙，防止鼠标滑动过程中触发 mouseleave 误收起 */
+.player-expanded-view::before {
+  content: '';
+  position: absolute;
+  top: -16px;
+  bottom: -16px;
+  left: -16px;
+  right: -16px;
+  z-index: -1;
+  pointer-events: auto;
 }
 
 /* 折叠圆形视角的精巧图标与呼吸动效 */
@@ -1172,6 +1207,7 @@ textarea.fabric-textarea,
   display: flex;
   align-items: center;
   justify-content: center;
+  pointer-events: none;
 }
 
 #miniDiscIcon {
@@ -1203,15 +1239,15 @@ textarea.fabric-textarea,
   height: 12px;
 }
 
-/* 播放中的光环脉动动画 */
-.floating-audio-player.collapsed.playing {
+/* 播放中的光环脉动动画 (作用于常驻小圆圈) */
+.floating-audio-player.playing .player-collapsed-view {
   animation: audioPulse 2s infinite ease-in-out;
   border-color: #3b82f6;
 }
 
 @keyframes audioPulse {
   0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.5); }
-  60% { box-shadow: 0 0 0 10px rgba(37, 99, 235, 0); }
+  60% { box-shadow: 0 0 0 12px rgba(37, 99, 235, 0); }
   100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
 }
 
@@ -2464,10 +2500,10 @@ textarea.fabric-textarea,
       </div>
     </main>
 
-    <!-- 可拖动的悬浮简易音频播放器 (支持展开/折叠圆形图标模式) -->
-    <div class="floating-audio-player" id="floatingAudioPlayer">
-      <!-- 折叠圆形精简状态 -->
-      <div class="player-collapsed-view" id="playerCollapsedView" title="悬浮音频 (悬停展开 / 按住拖动)">
+    <!-- 可拖动的悬浮音频播放器 (以常驻圆形为基准点，触碰在周围自适应弹出完整面板，可按住⭕随意拖动) -->
+    <div class="floating-audio-player collapsed" id="floatingAudioPlayer">
+      <!-- 常驻圆形基准点状态 (小圆圈不消失，可鼠标按住拖拽) -->
+      <div class="player-collapsed-view" id="playerCollapsedView" title="悬浮音频 (触碰展开面板 / 按住⭕拖动位置)">
         <div class="mini-disc-container" id="miniDiscContainer">
           <i data-lucide="disc-3" class="spin-icon" id="miniDiscIcon"></i>
           <div class="mini-play-badge" id="miniPlayBadge">
@@ -2703,7 +2739,7 @@ const state = {
   // 当前音频
   currentAudioIndex: -1,
   isPlaying: false,
-  isCollapsed: false,
+  isCollapsed: true, // 初始保持精炼小圆圈形态
   collapseTimer: null,
   isContinuousPlay: false, // 连播开关：false (默认单曲播放完自动停止), true (列表连播)
   
@@ -3221,8 +3257,9 @@ async function init() {
   initFabricCanvas();
   // 初始化静默录屏配置与持久化存储
   ScreenRecorder.init();
-  // 页面加载后等待5秒无交互自动收缩为悬浮圆形图标
-  scheduleCollapse();
+  // 初始保持小圆圈形态，并就绪基准点与方位计算
+  collapsePlayer();
+  updatePlayerPlacement();
 
   // 初始化本地持久化数据库并尝试恢复会话
   await DB.init();
@@ -5330,36 +5367,98 @@ function formatTime(seconds) {
 }
 
 // ==========================================
-// 悬浮音频播放器形态切换 (展开/折叠) 与拖动机制
+// 悬浮音频播放器形态切换 (以常驻圆圈为基准点，四周自适应展开) 与拖动机制
 // ==========================================
+function updatePlayerPlacement() {
+  const player = elements.floatingAudioPlayer;
+  const panel = elements.playerExpandedView;
+  if (!player || !panel) return;
+
+  const rect = player.getBoundingClientRect();
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const panelWidth = 320;
+  // 展开面板典型高度约 195px
+  const panelHeight = (panel.offsetHeight && panel.offsetHeight > 50) ? panel.offsetHeight : 195;
+  const gap = 12;
+
+  // 1. 垂直展开方位智能决策 (优先上下展开，符合悬浮交互直觉)
+  const spaceTop = rect.top;
+  const spaceBottom = vh - rect.bottom;
+
+  let placeTop = true;
+  if (spaceBottom >= panelHeight + gap && spaceTop < panelHeight + gap) {
+    // 上方空间不足，但下方空间充裕 -> 向下展开
+    placeTop = false;
+  } else if (spaceTop >= panelHeight + gap) {
+    // 上方空间充足 -> 优先向上展开 (底部悬浮最佳视线)
+    placeTop = true;
+  } else {
+    // 上下空间都较紧凑时，选择空间更大的一方
+    placeTop = spaceTop >= spaceBottom;
+  }
+
+  // 重置定位
+  panel.style.top = '';
+  panel.style.bottom = '';
+  panel.style.left = '';
+  panel.style.right = '';
+
+  if (placeTop) {
+    // 向上展开：面板底边与小圆圈顶边保持 gap
+    panel.style.bottom = `${rect.height + gap}px`;
+    // 若向上延伸仍微量触顶，做向下安全偏移
+    const estimatedTop = rect.top - (panelHeight + gap);
+    if (estimatedTop < 10) {
+      panel.style.bottom = 'auto';
+      panel.style.top = `${10 - rect.top}px`;
+    }
+  } else {
+    // 向下展开：面板顶边与小圆圈底边保持 gap
+    panel.style.top = `${rect.height + gap}px`;
+    // 若向下延伸触底，做向上安全偏移
+    const estimatedBottom = rect.bottom + gap + panelHeight;
+    if (estimatedBottom > vh - 10) {
+      panel.style.top = 'auto';
+      panel.style.bottom = `${rect.bottom - (vh - 10)}px`;
+    }
+  }
+
+  // 2. 水平对齐决策：
+  // 优先左对齐圆圈（left: 0），向右侧展开
+  if (rect.left + panelWidth <= vw - 12) {
+    panel.style.left = '0px';
+  } else if (rect.right - panelWidth >= 12) {
+    // 向右展开会溢出右边界，但向左展开空间充裕，则右对齐圆圈（right: 0），向左侧展开
+    panel.style.right = '0px';
+  } else {
+    // 左右均受限时，钳制在安全视口 [12, vw - 12] 内
+    const overflowRight = (rect.left + panelWidth) - (vw - 12);
+    if (overflowRight > 0) {
+      panel.style.left = `${-overflowRight}px`;
+    } else {
+      panel.style.left = '0px';
+    }
+  }
+}
+
 function expandPlayer() {
   if (state.collapseTimer) {
     clearTimeout(state.collapseTimer);
     state.collapseTimer = null;
   }
-  if (state.isCollapsed) {
-    state.isCollapsed = false;
-    elements.floatingAudioPlayer.classList.remove('collapsed');
-    
-    // 展开时边界检查，防止右侧或底部溢出屏幕
-    const rect = elements.floatingAudioPlayer.getBoundingClientRect();
-    if (rect.left + 330 > window.innerWidth) {
-      const safeLeft = Math.max(10, window.innerWidth - 335);
-      elements.floatingAudioPlayer.style.left = `${safeLeft}px`;
-    }
-    if (rect.top + 220 > window.innerHeight) {
-      const safeTop = Math.max(60, window.innerHeight - 230);
-      elements.floatingAudioPlayer.style.top = `${safeTop}px`;
-    }
-    updateAudioUI();
-  }
+  state.isCollapsed = false;
+  elements.floatingAudioPlayer.classList.remove('collapsed');
+  elements.floatingAudioPlayer.classList.add('expanded');
+  updatePlayerPlacement();
+  updateAudioUI();
 }
 
 function scheduleCollapse() {
   if (state.collapseTimer) {
     clearTimeout(state.collapseTimer);
   }
-  // 鼠标离开表面 1 秒后收缩为圆形图标 (统一为 1 秒)
+  // 鼠标离开表面 1 秒后收缩回圆形图标状态
   state.collapseTimer = setTimeout(() => {
     if (!state.isDraggingPlayer) {
       collapsePlayer();
@@ -5369,6 +5468,7 @@ function scheduleCollapse() {
 
 function collapsePlayer() {
   state.isCollapsed = true;
+  elements.floatingAudioPlayer.classList.remove('expanded');
   elements.floatingAudioPlayer.classList.add('collapsed');
   updateAudioUI();
 }
@@ -5379,10 +5479,17 @@ function setupFloatingPlayerDrag() {
   let startX, startY, initialLeft, initialTop;
   let hasMoved = false;
 
-  // 统一拖拽起点监听 (支持折叠圆形模式与展开标题模式)
+  // 统一拖拽起点监听 (支持小圆圈⭕直接按住拖拽，以及展开状态下的标题栏拖拽)
   player.addEventListener('mousedown', (e) => {
-    // 忽略展开状态下的交互控件 (如按键、进度条、音量滑块)
-    if (!state.isCollapsed && (e.target.closest('button') || e.target.closest('input'))) {
+    // 忽略交互控件 (如按键、进度条、音量滑块、连播复选框)
+    if (e.target.closest('button') || e.target.closest('input') || e.target.closest('label')) {
+      return;
+    }
+
+    // 只允许拖拽小圆圈 或 展开面板顶部的拖拽区
+    const isDragOnCircle = e.target.closest('#playerCollapsedView');
+    const isDragOnHeader = e.target.closest('#playerHeader');
+    if (!isDragOnCircle && !isDragOnHeader) {
       return;
     }
 
@@ -5404,6 +5511,7 @@ function setupFloatingPlayerDrag() {
     player.style.left = `${initialLeft}px`;
     player.style.top = `${initialTop}px`;
 
+    player.classList.add('dragging');
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
     e.preventDefault();
@@ -5421,34 +5529,54 @@ function setupFloatingPlayerDrag() {
     let newLeft = initialLeft + dx;
     let newTop = initialTop + dy;
 
-    // 边界限制
-    const maxX = window.innerWidth - player.offsetWidth;
-    const maxY = window.innerHeight - player.offsetHeight;
+    // 边界限制：小圆圈基准点本身为 52x52
+    const circleSize = 52;
+    const maxX = window.innerWidth - circleSize;
+    const maxY = window.innerHeight - circleSize;
     newLeft = Math.max(10, Math.min(newLeft, maxX - 10));
-    newTop = Math.max(60, Math.min(newTop, maxY - 10));
+    newTop = Math.max(50, Math.min(newTop, maxY - 10));
 
     player.style.left = `${newLeft}px`;
     player.style.top = `${newTop}px`;
+
+    // 拖动过程中实时更新周围面板展开方位
+    updatePlayerPlacement();
   }
 
   function onMouseUp(e) {
     state.isDraggingPlayer = false;
+    player.classList.remove('dragging');
     document.removeEventListener('mousemove', onMouseMove);
     document.removeEventListener('mouseup', onMouseUp);
 
-    // 如果在折叠状态下只是轻点而非拖动，展开播放器
-    if (!hasMoved && state.isCollapsed) {
-      expandPlayer();
+    // 如果只是在小圆圈上轻点（未发生显著拖拽移动）
+    if (!hasMoved && e.target.closest('#playerCollapsedView')) {
+      if (state.isCollapsed) {
+        expandPlayer();
+      } else {
+        // 已展开状态下轻点小圆圈可快捷播放 / 暂停
+        togglePlayAudio();
+      }
     }
 
-    // 若松手时鼠标不在播放器内，重新计时5秒收缩
-    const rect = player.getBoundingClientRect();
-    const isInside = (
-      e.clientX >= rect.left &&
-      e.clientX <= rect.right &&
-      e.clientY >= rect.top &&
-      e.clientY <= rect.bottom
+    // 检查松手时鼠标是否在播放器区域内（包括小圆圈和展开面板）
+    const playerRect = player.getBoundingClientRect();
+    const panelRect = elements.playerExpandedView ? elements.playerExpandedView.getBoundingClientRect() : null;
+    
+    const inCircle = (
+      e.clientX >= playerRect.left &&
+      e.clientX <= playerRect.right &&
+      e.clientY >= playerRect.top &&
+      e.clientY <= playerRect.bottom
     );
+    const inPanel = panelRect && !state.isCollapsed && (
+      e.clientX >= panelRect.left &&
+      e.clientX <= panelRect.right &&
+      e.clientY >= panelRect.top &&
+      e.clientY <= panelRect.bottom
+    );
+
+    const isInside = inCircle || inPanel;
     isMouseInPlayer = isInside;
     if (!isInside) {
       scheduleCollapse();
@@ -5457,6 +5585,13 @@ function setupFloatingPlayerDrag() {
       }
     }
   }
+
+  // 窗口大小调整时实时重新校准展开面板位置
+  window.addEventListener('resize', () => {
+    if (!state.isCollapsed) {
+      updatePlayerPlacement();
+    }
+  });
 }
 
 // ==========================================
